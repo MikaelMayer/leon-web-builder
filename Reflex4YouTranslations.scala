@@ -9,8 +9,8 @@ object Reflex4YouTranslations {
   val translations = Map(
   "eng" -> Map(
     "websiteurl" -> "reflex4you.com",
-    "welcome_to" -> "Welcome to ",
-    "a_cool_website" -> ", a website where you can create customized mathematical art from friends’ names.",
+    "welcome_to" -> "Welcome to the ",
+    "a_cool_website" -> ", a website where you can create customized mathematical art from friendsÃ¢â‚¬â„¢ names.",
     "Please" -> "Please ",
     "writeyourname" -> "write your name",
     "ibelow" -> " below",
