@@ -21,7 +21,7 @@ object ThreeDPrintersInstructions {
     else "Please follow the instructions to put your printer."
   
   def renderThreadSetup(d: ThreadSetup): WebTree =
-    TextElement("In the "+d.position+" printing head, put a "+d.kind+" thread.")
+    <.li("In the "+d.position+" printing head, put a "+d.kind+" thread.")
   
   def renderPrinter(d: ThreeDPrinter) = {
     <.ol(
