@@ -194,7 +194,11 @@ object DoodleThai {
 )
 
   def render = {
-    WebPage(page, css)
+    WebPage(
+      <.div(
+        <.h1("LARA Thai meeting"),
+        <.p("Choose your meal. See you friday in INR kitchen at 13:15"),
+        page), css)
   }
 }
 
