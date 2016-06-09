@@ -12,6 +12,9 @@ object DoodleThai {
         ^.position:= "absolute",
         ^.top:= "-999em"
     ),
+    ".textPoll th, .textPoll .foot td" := (
+        ^.maxWidth:= "94px"
+    ),
     "label" := (
         ^.fontWeight:= "normal"
     ),
@@ -37,12 +40,35 @@ object DoodleThai {
     ),
     "table.poll tr.participation td:hover, table.poll tr.participation.inEdit td:hover" := (
       ^.backgroundColor := "#d6d6d6"),
-    "table.poll tr.participation td.pname" := (
-       ^.textAlign := "left"
+    "table.poll tr.participation td.pname,table.poll tr.participant td.pname" := (
+        ^.position := "relative",
+        ^.minWidth := "182px",
+        ^.width := "182px",
+        ^.borderTop := "1px solid #fff",
+        ^.borderBottom := "2px solid #fff",
+        ^.background := "url('http://doodle.com/builtstatic/1465286543/doodle/graphics/sprites/common/normal-s92f91c2182.png') -15px -972px no-repeat #fff",
+        ^.css("imageRendering") := "-moz-crisp-edges",
+        ^.css("imageRendering") := "-o-crisp-edges",
+        ^.css("imageRendering") := "-webkit-optimize-contrast",
+        ^.css("imageRendering") := "crisp-edges",
+        ^.css("-ms-interpolation-mode") := "nearest-neighbor",
+        ^.padding := "0 2px 0 0"
     ),
     "table.poll tr.header.month th.xsep" := (
         ^.background := """url("http://doodle.com/graphics/polls/tick31r.png") right 0 repeat-y #3385e4""",
         ^.paddingRight := "13px"
+    ),
+    "table.poll td.pname div.pname" := (
+        ^.textAlign := "left",
+        ^.fontSize := "15px",
+        ^.lineHeight := "15px",
+        ^.padding := "8px 0 5px 0",
+        ^.marginLeft := "3px",
+        ^.whiteSpace := "nowrap",
+        ^.overflow := "hidden",
+        ^.maxWidth := "135px",
+        ^.width := "135px",
+        ^.position := "relative"
     ),
     "table.poll tr.date th, table.poll tr.date td" := (
     ^.background:= "#3385e4",
@@ -70,6 +96,18 @@ object DoodleThai {
     ^.margin:= "3px 0 3px 3px",
     ^.width:= "131px",
     ^.padding:= "2px 6px 2px 9px"
+    ),
+    
+    "table.poll tr th.nonHeader.partCount, table.poll tr td.partCount" := (
+    ^.background:= "#fff",
+    ^.padding:= "0 0 9px 0",
+    ^.verticalAlign:= "bottom",
+    ^.fontSize:= "13px",
+    ^.color:= "#323232",
+    ^.minWidth:= "184px",
+    ^.width:= "184px",
+    ^.fontWeight:= "bold",
+    ^.maxWidth:= "none"
     )
   )
   
