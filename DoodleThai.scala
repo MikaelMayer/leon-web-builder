@@ -12,6 +12,14 @@ object DoodleThai {
         ^.position:= "absolute",
         ^.top:= "-999em"
     ),
+    """.form-control, textarea, select, input[type="text"], input[type="password"], input[type="datetime"], input[type="datetime-local"], input[type="date"], input[type="month"], input[type="time"], input[type="week"], input[type="number"], input[type="email"], input[type="url"], input[type="search"], input[type="tel"], input[type="color"], .uneditable-input""" := (
+    ^.height := "30px",
+    ^.paddingTop := "4px",
+    ^.paddingBottom := "4px",
+    ^.borderRadius := "0",
+    ^.borderColor := "#b7b7b7",
+    ^.fontSize := "13px"
+    ),
     ".textPoll th, .textPoll .foot td" := (
         ^.maxWidth:= "94px"
     ),
@@ -108,6 +116,14 @@ object DoodleThai {
     ^.width:= "184px",
     ^.fontWeight:= "bold",
     ^.maxWidth:= "none"
+    ),
+    "table.poll tr.sums td" := (
+    ^.textAlign := "center",
+    ^.lineHeight := "16px",
+    ^.paddingLeft := "5px",
+    ^.paddingRight := "8px",
+    ^.paddingTop := "5px",
+    ^.color := "#6f6f6f"
     )
   )
   
@@ -167,7 +183,7 @@ object DoodleThai {
           <.label( ^.classes := "hiddenAcc", ^.forid :="pname", ^.title := "l10n_yourName"),
           <.input( ^.classes := "form-control", ^.id := "pname", ^.maxlength :="64", ^.name :="name", ^.placeholder:="Votre nom", ^.tpe :="text", ^.value :=""))),
       <.td( ^.classes := "xsep", ^("data") := "0", ^.id := "box0", ^.title := "Boeuf (CH) au curry jaune, lait de coco, pommes de terre et cacahuètes",
-        <.label( ^.classes := "hiddenAcc", ^.forid :="option0","Boeuf (CH) au curry jaune, lait de coco, pommes de terre et cacahuÃ¨tes"),
+        <.label( ^.classes := "hiddenAcc", ^.forid :="option0","Boeuf (CH) au curry jaune, lait de coco, pommes de terre et cacahuètes"),
         <.input( ^.id := "option0", ^.name :="p", ^.tpe :="checkbox")),
       <.td( ^.classes := "xsep", ^("data") := "1", ^.id := "box1", ^.title := "Poulet (CH) au curry rouge, lait de coco et courge thaÃ¯",
         <.label( ^.classes := "hiddenAcc", ^.forid :="option1","Poulet (CH) au curry rouge, lait de coco et courge thaÃ¯"),
@@ -197,7 +213,7 @@ object DoodleThai {
     WebPage(
       <.div(
         <.h1("LARA Thai meeting"),
-        <.p("Choose your meal. See you friday in INR kitchen at 13:15"),
+        <.p("Choose your menu. See you friday in INR kitchen at 13:15"),
         page), css)
   }
 }
