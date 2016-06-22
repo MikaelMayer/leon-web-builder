@@ -3,7 +3,7 @@ import leon.webDSL.webDescription._
 import leon.webDSL.webBuilding._
 import implicits._
 import scala.language.dynamics
-import leon.lang.Map
+import leon.lang._
 
 object DoodleThai {
   val css = Style(
@@ -124,8 +124,97 @@ object DoodleThai {
     ^.paddingRight := "8px",
     ^.paddingTop := "5px",
     ^.color := "#6f6f6f"
-    )
+    ),
+    "table.poll tr.participant td.q" := (
+    ^.backgroundColor:= "#eaeaea"
+      )
   )
+  
+  
+  val participants = List(
+    "Leon Weber",
+    "Keanu",
+    "MysteriousMan"
+    )
+    
+  val choix: List[(BigInt, BigInt, Boolean)] = List(
+    (1, 1, true ),
+    (1, 2, false),
+    (1, 3, false),
+    (1, 4, false),
+    (1, 5, true ),
+    (2, 1, false),
+    (2, 2, true ),
+    (2, 3, false),
+    (2, 4, false),
+    (3, 1, true ),
+    (3, 2, true ),
+    (3, 3, true ),
+    (3, 4, false)
+  )
+  
+  def total(menuId: BigInt): WebTree = {
+      val t = choix.count(entry => entry._2 ==         menuId && entry._3 == true)
+      <.td(t.toString)
+      //if choix._3 = true
+  }
+  
+  def checkBox(colonne: BigInt): WebTree = 
+    <.td(
+      ^.classes := "xsep", ^("data") := colonne.toString,
+      ^.id := "box" + colonne, ^.title := "....",
+        <.label( 
+          ^.classes := "hiddenAcc", 
+          ^.forid :="option" + colonne,"Boeuf (CH) au curry jaune, lait de coco, pommes de terre et cacahuètes"),
+            <.input( 
+              ^.id := "option" + colonne, 
+              ^.name :="p", 
+              ^.tpe :="checkbox"))
+  
+  def WantsToEat (personId: BigInt, menuId: BigInt): WebTree = choix.find(entry => entry._1 == personId && entry._2 == menuId) match{
+    case Some(choix) => if (choix._3) 
+    <. td(
+      ^.classes := "partTableCell y xsep pok",
+      ^.title := (participants(personId-1)) + ", " + (menus(menuId-1)) + ": Oui",
+        <.img(
+          ^.alt := (participants(personId-1)) + ", " + (menus(menuId-1)) + ": Oui",
+          ^.classes := "preferenceTick",
+          ^.src := "http://doodle.com/builtstatic/1464857356/doodle/graphics/polls/tick_pok.png"))
+    else
+      <.td (
+        ^.classes := "partTableCell n xsep pn", ^.title := (participants(personId-1) + ", " + (menus(menuId-1))+ ": Non"))
+    case None() => 
+    <.td(
+      ^.classes := "partTableCell q sep pog",
+      ^.title := (participants(personId-1)) + ", " + (menus(menuId-1)),
+      <.img(
+        ^.alt := "Mikael Mayer, Toboggan de sauce tomate: ?",
+        ^.classes := "preferenceTick",
+        ^.src := "http://doodle.com/builtstatic/1466498440/doodle/graphics/polls/tick_pog.png",
+        ^("data-tip") := "false"
+      ))
+  }
+
+  val menus = List(
+    "Boeuf (CH) au curry jaune, lait de coco, pommes de terre et cacahuètes",
+    "Poulet (CH) au curry rouge, lait de coco et courge thaï",
+    "Phat sen ma ma (nouilles jaunes) sautées aux crevettes", 
+    "Veg - Tofu sauté aux légumes et graines de soja",
+    "Soupe de nouilles de riz au porc (CH)"
+    )
+    
+  def ligne(menu: String): WebTree = 
+      <.td(menu)
+      
+  def nom(personId: BigInt): WebTree = 
+    <.tr( ^.classes := "participant partMyself",
+      <.td( ^.classes := "pname", ^.id := "part1367130755",
+        <.div( ^.classes := "pname ",
+        participants(personId-1))))(
+        List.range(1, menus.length+1).map(menusId => WantsToEat(personId, menusId))
+      
+         
+        )
   
   val page = 
 <.table(
@@ -136,75 +225,21 @@ object DoodleThai {
   <.tbody(
     <.tr(^.classes := "header date month",
       <.th(^.classes := "nonHeader partCount boldText",
-        <.div("2 participants")),
-      <.th(^.classes := "xsep", ^.colspan := "1",
-        <.div("Boeuf (CH) au curry jaune, lait de coco, pommes de terre et cacahuètes")),
-      <.th( ^.classes := "xsep", ^.colspan := "1",
-        <.div("Poulet (CH) au curry rouge, lait de coco et courge thaÃ¯")),
-      <.th( ^.classes := "xsep", ^.colspan := "1",
-        <.div("Phat sen ma ma (nouilles jaunes) sautées aux crevettes")),
-      <.th( ^.classes := "xsep", ^.colspan := "1",
-        <.div("Veg - Tofu sauté aux légumes et graines de soja")),
-      <.th( ^.classes := "rsep", ^.colspan := "1",
-        <.div("Soupe de nouilles de riz au porc (CH)"))),
-    <.tr(),
-    <.tr( ^.classes := "participant  partMyself",
-      <.td( ^.classes := "pname", ^.id := "part1367130755",
-        <.div( ^.classes := "inlineEdit  active",
-          <.a( ^.classes := "inlineDeleteIcon", ^("dataid") := "1367130755", ^("dataname") := "Leon Weber", ^.title:="Effacer la saisie", ^.tabindex := "0"),
-          <.a( ^.classes := "inlineEditIcon", ^("dataid") := "1367130755", ^.title := "Modifier la saisie", ^.tabindex := "0")),
-        <.div( ^.classes := "avatarSmall hasMeetMe", ^("data") := "leonweber", ^.backgroundImage := "url('https://6a5edc300520d4037dd6-0732807511066685711db213ddc1d2df.ssl.cf2.rackcdn.com/ziiews13v6v78g0ovi81wz4libj4vgn8')"),
-        <.div( ^.classes := "pname ", ^.title := "Leon Weber",
-          <.a( ^.href := "/leonweber", ^.target := "_blank","Leon Weber"))),
-      <.td( ^.classes := "partTableCell n xsep pn", ^.title := "Leon Weber, Boeuf (CH) au curry jaune, lait de coco, pommes de terre et cacahuÃ¨tes: Non"),
-      <.td( ^.classes := "partTableCell y xsep pok", ^.title := "Leon Weber, Poulet (CH) au curry rouge, lait de coco et courge thaÃ¯: Oui",
-        <.img( ^.alt := "Leon Weber, Poulet (CH) au curry rouge, lait de coco et courge thaÃ¯: Oui", ^.classes := "preferenceTick", ^.src := "http://doodle.com/builtstatic/1464857356/doodle/graphics/polls/tick_pok.png")),
-      <.td( ^.classes := "partTableCell n xsep pn", ^.title := "Leon Weber, Phat sen ma ma (nouilles jaunes) sautÃ©es aux crevettes: Non"),
-      <.td( ^.classes := "partTableCell n xsep pn", ^.title := "Leon Weber, Veg - Tofu sautÃ© aux légumes et graines de soja: Non"),
-      <.td( ^.classes := "partTableCell n sep pn", ^.title := "Leon Weber, Soupe de nouilles de riz au porc (CH): Non")),
-    <.tr( ^.classes := "participant ",
-      <.td( ^.classes := "pname", ^.id := "part2124972605",
-        <.div( ^.classes := "inlineEdit sr-only",
-          <.a( ^.classes := "inlineDeleteIcon", ^("dataid") := "2124972605", ^("dataname") := "Keanu", ^.title := "Effacer la saisie", ^.tabindex := "0"),
-          <.a( ^.classes := "inlineEditIcon", ^("dataid") := "2124972605", ^.title := "Modifier la saisie", ^.tabindex := "0")),
-        <.div( ^.classes := "avatarSmall ", ^("data") := "", ^.backgroundImage := "url('http://doodle.com/builtstatic/1464857356/doodle/graphics/avatar.png')",
-        <.div( ^.classes := "gravatar", ^.backgroundImage := "url('https://secure.gravatar.com/avatar/?s=30&amp;r=x&amp;d=blank')")),
-        <.div( ^.classes := "pname ", ^.title := "Keanu", "Keanu")),
-      <.td( ^.classes := "partTableCell n xsep pn", ^.title := "Keanu, Boeuf (CH) au curry jaune, lait de coco, pommes de terre et cacahuÃ¨tes: Non"),
-      <.td( ^.classes := "partTableCell y xsep pok", ^.title := "Keanu, Poulet (CH) au curry rouge, lait de coco et courge thaÃ¯: Oui",
-        <.img( ^.alt := "Keanu, Poulet (CH) au curry rouge, lait de coco et courge thaÃ¯: Oui", ^.classes := "preferenceTick", ^.src := "http://doodle.com/builtstatic/1464857356/doodle/graphics/polls/tick_pok.png")),
-      <.td( ^.classes := "partTableCell n xsep pn", ^.title := "Keanu, Phat sen ma ma (nouilles jaunes) sautÃ©es aux crevettes: Non"),
-      <.td( ^.classes := "partTableCell n xsep pn", ^.title := "Keanu, Veg - Tofu sautÃ© aux lÃ©gumes et graines de soja: Non"),
-      <.td( ^.classes := "partTableCell n sep pn", ^.title := "Keanu, Soupe de nouilles de riz au porc (CH): Non")),
+      <.div(participants.length.toString + " participants")))
+      (
+        menus.map(menu => ligne(menu))
+        ),
+    <.tr())(
+      List.range(1, participants.length+1).map(personId => nom(personId)))(
+
     <.tr( ^.classes := "participation yesNo",
       <.td( ^.classes := "pname",
-        <.div( ^.width := "182px",
-          <.div( ^.classes := "avatarSmall", ^.backgroundImage := "url('https://6a5edc300520d4037dd6-0732807511066685711db213ddc1d2df.ssl.cf2.rackcdn.com/ziiews13v6v78g0ovi81wz4libj4vgn8')"),
           <.label( ^.classes := "hiddenAcc", ^.forid :="pname", ^.title := "l10n_yourName"),
-          <.input( ^.classes := "form-control", ^.id := "pname", ^.maxlength :="64", ^.name :="name", ^.placeholder:="Votre nom", ^.tpe :="text", ^.value :=""))),
-      <.td( ^.classes := "xsep", ^("data") := "0", ^.id := "box0", ^.title := "Boeuf (CH) au curry jaune, lait de coco, pommes de terre et cacahuètes",
-        <.label( ^.classes := "hiddenAcc", ^.forid :="option0","Boeuf (CH) au curry jaune, lait de coco, pommes de terre et cacahuètes"),
-        <.input( ^.id := "option0", ^.name :="p", ^.tpe :="checkbox")),
-      <.td( ^.classes := "xsep", ^("data") := "1", ^.id := "box1", ^.title := "Poulet (CH) au curry rouge, lait de coco et courge thaÃ¯",
-        <.label( ^.classes := "hiddenAcc", ^.forid :="option1","Poulet (CH) au curry rouge, lait de coco et courge thaÃ¯"),
-        <.input( ^.id := "option1", ^.name :="p", ^.tpe :="checkbox")),
-      <.td( ^.classes := "xsep", ^("data") := "2", ^.id := "box2", ^.title := "Phat sen ma ma (nouilles jaunes) sautÃ©es aux crevettes",
-        <.label( ^.classes := "hiddenAcc", ^.forid :="option2","Phat sen ma ma (nouilles jaunes) sautÃ©es aux crevettes"),
-        <.input( ^.id := "option2", ^.name :="p", ^.tpe :="checkbox")),
-      <.td( ^.classes := "xsep", ^("data") := "3", ^.id := "box3", ^.title := "Veg - Tofu sautÃ© aux lÃ©gumes et graines de soja",
-        <.label( ^.classes := "hiddenAcc", ^.forid :="option3","Veg - Tofu sauté aux légumes et graines de soja"),
-        <.input( ^.id := "option3", ^.name :="p", ^.tpe :="checkbox")),
-      <.td( ^.classes := "", ^("data") := "4", ^.id := "box4", ^.title := "Soupe de nouilles de riz au porc (CH)",
-        <.label( ^.classes := "hiddenAcc", ^.forid :="option4","Soupe de nouilles de riz au porc (CH)"),
-        <.input( ^.id := "option4", ^.name :="p", ^.tpe :="checkbox"))),
+          <.input( ^.classes := "form-control", ^.id := "pname", ^.maxlength :="64", ^.name :="name", ^.placeholder:="Votre nom", ^.tpe :="text", ^.value :=""))
+  )(List.range(1, menus.length).map(menusId => checkBox(menusId))),
     <.tr( ^.classes := "sums",
-      <.td( ^.classes := "nonHeader"),
-      <.td( ^.classes := " ",  "0" ),
-      <.td( ^.classes := " ",
-        <.b( "2" )),
-      <.td( ^.classes := " ", "0" ),
-      <.td( ^.classes := " ", "0" ),
-      <.td( ^.classes := " ", "0" )
+      <.td( ^.classes := "nonHeader"))(
+     List.range(1, menus.length+1).map(menusId => total(menusId))
     )
   )
 )
@@ -213,9 +248,7 @@ object DoodleThai {
     WebPage(
       <.div(
         <.h1("LARA Thai meeting"),
-        <.p("Choose your menu. See you friday in INR kitchen at 13:15"),
+        <.p("Choose your menu. See you {enter date here} in {enter meeting place here} at {enter hour here}!"),
         page), css)
   }
 }
-
-
