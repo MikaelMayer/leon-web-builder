@@ -21,6 +21,9 @@ object Main {
       ^.position := "absolute",
       ^.width := "100%",
       ^.top := "300px"
+    ),
+    "h2" := (
+      ^.margin := "10px"
     )
   )
 
