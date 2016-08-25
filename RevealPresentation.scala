@@ -1,8 +1,8 @@
 /** 
-  * Name:     JsonRender.scala
-  * Creation: 25.11.2015
+  * Name:     RevealPresentation.scala
+  * Creation: 24.08.2016
   * Author:   Mikael Mayer (mikael.mayer@epfl.ch)
-  * Comments: Json specifications
+  * Comments: A presentation using Reveal.js and ResponsiveVoice
   */
 
 import leon.lang._
@@ -26,7 +26,7 @@ object Main {
 
   val slideTitle = "Unnamed"
   
-  val slideColor = cyan
+  val slideColor = "cyan"
   
   def main = {
     WebPage(
@@ -40,7 +40,7 @@ object Main {
                 <.li(<.i("The title of this slide is \"" + slideTitle + "\" because we think it's cool."))
               ),
               <.p(if(expected(slideTitle) && slideColor != "pink") "Congratulations! you edited your first presentation." else ""),
-              <.p(if(expected(slideTitle)) (if(slideColor != "pink") "Now the background of these slides is "+slideColor+". Can you change it to pink by just modifying the word in this paragraph?" else "Well done! That's the end of the demo.") else "")),
+              <.p(if(expected(slideTitle)) (if(slideColor != "pink") "Now the background of these slides is "+slideColor+". Can you change it to pink by just modifying the word after \"these slides is\" in this paragraph?" else "Well done! That's the end of the demo.") else "")),
             <.section(
               <.h2(slideTitle),
               ^.background := slideColor,
@@ -68,6 +68,38 @@ object Main {
   }
   
   $("#themewebbuilder").attr("href", "/assets/css/theme/simple.css");
+  
+  if($("#responsivevoice").length == 0) {
+    $("head").append($('<script id="responsivevoice" src="https://code.responsivevoice.org/responsivevoice.js"/>'))
+  }
+  
+  var paragraphs = function(elements) {
+    return elements.find("*").contents().filter(function() { return this.nodeType === 3; }).map(function(index, elem) { return elem.textContent; })
+  }
+  
+  var read = function(elem) {
+    paragraphs($(elem)).each(function(index, text) { responsiveVoice.speak(text) })
+  }
+  
+  var $target = $("div.reveal > div.slides section");
+  var current = null
+  
+  $target.each(function(index, elem) {
+    var observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+          if (mutation.attributeName === "class") {
+              var attributeValue = $(mutation.target).prop(mutation.attributeName);
+              if (attributeValue == ("present") && mutation.target != current){
+                  read(mutation.target);
+                  current = mutation.target;
+              }
+          }
+      });
+    });
+    observer.observe(elem,  { attributes: true });
+  })
+  
+  setTimeout( function() { read("section.present") }, 0 )
 
   """
 }
