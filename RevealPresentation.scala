@@ -63,6 +63,11 @@ object Main {
   $.getScript("/assets/js/reveal.js", function() {
     Reveal.initialize();
   });
+  
+  if($("#revealcsslink").length == 0) {
+    $("head").append($('<link id="revealcsslink" rel="stylesheet" media="screen" href="/assets/css/reveal.css">'))
+  }
+  
   if($("#themewebbuilder").length == 0) {
     $("head").append($('<link id="themewebbuilder" rel="stylesheet" media="screen"/>'))
   }
@@ -72,11 +77,7 @@ object Main {
   if($("#responsivevoice").length == 0) {
     $("head").append($('<script id="responsivevoice" src="https://code.responsivevoice.org/responsivevoice.js"/>'))
   }
-  
-  if($("#revealcsslink").length == 0) {
-    $("head").append($('<link id="revealcsslink" rel="stylesheet" media="screen" href="/assets/css/reveal.css">'))
-  }
-  
+
   var paragraphs = function(elements) {
     return elements.find("*").contents().filter(function() { return this.nodeType === 3; }).map(function(index, elem) { return elem.textContent; })
   }
