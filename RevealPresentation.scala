@@ -24,10 +24,9 @@ object Main {
     )
   )
 
-  val slideTitle = "Introduction"
+  val slideTitle = "Unnamed"
   
-  val b = false
-  val slideColor = if(b) "red" else "yellow"
+  val slideColor = cyan
   
   def main = {
     WebPage(
