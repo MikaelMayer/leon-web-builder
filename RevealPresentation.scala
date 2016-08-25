@@ -99,7 +99,7 @@ object Main {
     observer.observe(elem,  { attributes: true });
   })
   
-  setTimeout( function() { read("section.present") }, 0 )
+  setTimeout( function() { read("section.present") }, 3000 )
 
   """
 }
