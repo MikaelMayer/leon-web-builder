@@ -26,7 +26,7 @@ val css = Style(
   ^.lineHeight:= "1.4em"
 ),
 ".g-row:after, .g-row:before" := (
-  ^.css("content"):= "",
+  ^.css("content"):= "\"\"",
   ^.display:= "table",
   ^.css("clear") := "both"
 ),
@@ -97,6 +97,7 @@ val css = Style(
   ^.fontSize:= "inherit"
 ),
 ".sprite-calendar" := (
+  ^.display:= "inline-block",
   ^.backgroundImage:= "url(http://static.epfl.ch/latest/images/sprites.png)",
   ^.width:= "13px",
   ^.height:= "12px",
@@ -128,6 +129,23 @@ val css = Style(
 ".media-list .media" := (
     ^.padding:= ".3075em 0 0",
     ^.borderTop:= "1px dotted #000"
+),
+".visuallyhidden" := (
+  ^.position := "absolute",
+  ^.padding := "0",
+  ^.margin := "-1px 0",
+  ^.height := "1px",
+  ^.width := "1px",
+  ^.border := "0",
+  ^.background := "#fff",
+  ^.css("clip") := "rect(0,0,0,0)",
+  ^.color := "#000",
+  ^.overflow := "hidden",
+  ^.css("z-index") := "-1"
+),
+".media-content .more:before" := (
+  ^.css("content"):= "\"»\"",
+  ^.css("font"):= "400 1.5em/.5em \"Arial Black\",Arial,Helvetica,Verdana,sans-serif"
 )
 )
 
