@@ -160,7 +160,22 @@ val css = Style(
       "addevent" -> "Ajouter l'événement à mon calendrier",
       "samedi" -> "Samedi 5 novembre 2016  09:00 - 18:00",
       "dimanche" -> "Dimanche 6 novembre 2016  10:00 - 17:00",
-      "titredesir" -> "Un ordinateur qui comprend (vraiment) vos d\u00E9sirs",
+      "titredesir" -> "Un ordinateur qui comprend (vraiment) vos désirs",
+      "resumedesir" -> "L'ordinateur fait tout ce qu'on lui demande. Pour autant qu'on sache programmer! Des chercheurs montrent comment mettre la programmation à la portée de tous avec un générateur de pages web qui tolère les corrections sur le résultat final.",
+      "urldesir" -> "http://memento.epfl.ch/event/un-ordinateur-qui-comprend-vraiment-vos-desirs/",
+      "titredrone" -> "Capturer des débris spatiaux à l’aide d’un drone",
+      "resumedrone" -> "L’intense activité spatiale de ces 60 dernières années a laissé de nombreux débris dans le proche espace de la Terre. Pour prendre la mesure du phénomène et de ses dangers, essayez de capturer des objets à l’aide de drones ! Activité conseillée dès l’âge de 10 ans.",
+      "urldrone" ->  "http://memento.epfl.ch/event/capturer-des-debris-spatiaux-a-laide-dun-drone/",
+      "titredronesolution" -> "Une solution innovante pour piloter votre drone",
+      "resumedronesolution" -> "Le marché des drones est en pleine expansion mais la manière de les contrôler n'a pas évolué depuis 50 ans. Les co-fondateurs de MotionPilot vous présenteront leur solution à travers une démonstration de leur prototype",
+      "urldronesolution" -> "http://memento.epfl.ch/event/une-solution-innovante-pour-piloter-votre-drone/"
+    ), "en" -> Map(
+      "portesouvertes" -> "Open doors 2016",
+      "moreabout" -> "En apprendre plus sur",
+      "addevent" -> "Ajouter l'événement à mon calendrier",
+      "samedi" -> "Samedi 5 novembre 2016  09:00 - 18:00",
+      "dimanche" -> "Dimanche 6 novembre 2016  10:00 - 17:00",
+      "titredesir" -> "Un ordinateur qui comprend (vraiment) vos désirs",
       "resumedesir" -> "L'ordinateur fait tout ce qu'on lui demande. Pour autant qu'on sache programmer! Des chercheurs montrent comment mettre la programmation à la portée de tous avec un générateur de pages web qui tolère les corrections sur le résultat final.",
       "urldesir" -> "http://memento.epfl.ch/event/un-ordinateur-qui-comprend-vraiment-vos-desirs/",
       "titredrone" -> "Capturer des débris spatiaux à l’aide d’un drone",
@@ -268,7 +283,7 @@ val css = Style(
     val t = Translator(lang)
     import ^._
     <.div(id := "body",
-      <.img(src := "http://www.kidlink.org/icons/f0-"+Flags(lang)+".gif", alt:= lang, classes := "flaglang"),
+      <.div(lang + " ", classes := "flaglang", <.img(src := "http://www.kidlink.org/icons/f0-"+Flags(lang)+".gif", alt:= lang)),
     <.h1(t("portesouvertes")),
     <.div(classes:="media-list event-list")(
       eventList(t).map((event: Event) => renderEvent(event, t))
