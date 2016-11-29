@@ -7,16 +7,16 @@ import leon.math._
 import leon.webDSL.webBuilding._
 import leon.webDSL.webDescription._
 import implicits._
-  
-object L {
-  def apply(param: String, body: Main.LambdaTerm): Main.L = Main.L(List(Main.V(param)), body)
-  def apply(param: String, param2: String, body: Main.LambdaTerm): Main.L = Main.L(List(Main.V(param), Main.V(param2)), body)
-}
-  
+
 object Main {
+  // Display parameters
+  val notationLambda = ("\\lambda ","", ".\\;","")
+  val notationArrow = ("", ",", "\\rightarrow ", "")
+  val notation = notationLambda // notationLambda, notationArrow
   val height = 600
   
-  def oneStepConversion[T](l: List[T], p: T => Option[T]): Option[List[T]] = { l match {
+  // Applies p once on the list, where it is defined.
+  def oneStepConversion[T](l: List[T], p: T => Option[T]): Option[List[T]] = l match {
     case Cons(h,t) =>
       p(h) match {
         case None() =>
@@ -28,15 +28,8 @@ object Main {
       }
     case Nil() => None()
   }
-  }
-  
-  /*
-  val slideColor = "cyan"
-  val name = "Marion"
-  val language = "fr"
-  val height = "600"
-*/  
-  
+
+  // The css of the webpage.
   val css = Style(
     ".centeredtitle" := (
       ^.marginTop := "50%",
@@ -72,17 +65,27 @@ object Main {
     )
   )
   
+  val lambdaPrefix = notation._1
+  val lambdaVarInfix = notation._2
+  val lambdaInfix = notation._3
+  val lambdaSuffix= notation._4
+  
+  // Abstract class from which we derive L (abstraction), A (application), V (variable), N (notation)
   abstract class LambdaTerm {
+    // Wraps the expression with parentheses if not a variable or a notation.
     def wrapParenthesesIfNeeded(p: LambdaTerm => String) = (l: LambdaTerm) => l match {
       case v: V => p(v)
       case n: N => p(n)
       case b => "(" + p(b) + ")"
     }
     
+    // Renders long variable names as text.
     def longNamesAreText(n: String): String = if(n.length > 1) "\\text{" + n + "}" else n
     
+    // Default conversion to string
     def mkString: String = this match {
-      case L(p, b) => "\\lambda " + List.mkString(p, "", (s: V) => s.mkString) +".\\;" + b.mkString
+      case l@L(p, b) => 
+        l.toCustomString(lambdaPrefix, lambdaVarInfix, lambdaInfix, lambdaSuffix, _.mkString)
       case A(a: L, b) => "(" + a.mkString + ")" + "\\;" + List.mkString(b, "\\;", wrapParenthesesIfNeeded(_.mkString))
       case A(a, b) => a.mkString + "\\;" + List.mkString(b, "\\;", wrapParenthesesIfNeeded(_.mkString))
       case V(name) => longNamesAreText(name)
@@ -90,9 +93,12 @@ object Main {
         subexprs.zip(interstrings.tail).foldLeft(interstrings.head)((prevs, news) => prevs + news._1.mkString + news._2)
     }
     
+    // Conversion to string with more parentheses.
     def mkStringUnambiguous: String = this match {
-      case L(p, b: V) => "\\lambda " + List.mkString(p, "", (s: V) => s.mkStringUnambiguous) +".\\;" + b.mkStringUnambiguous
-      case L(p, b) => "\\lambda " + List.mkString(p, "", (s: V) => s.mkStringUnambiguous) +".\\;(" + b.mkStringUnambiguous + ")"
+      case l@L(p, b: V) =>
+        l.toCustomString(lambdaPrefix, lambdaVarInfix, lambdaInfix, lambdaSuffix, _.mkStringUnambiguous)
+      case l@L(p, b) =>
+        l.toCustomString(lambdaPrefix, lambdaVarInfix, lambdaInfix + "(", ")" + lambdaSuffix, _.mkStringUnambiguous)
       case A(a: V, b) => a.mkStringUnambiguous + "\\;" + List.mkString(b, "\\;", wrapParenthesesIfNeeded(_.mkStringUnambiguous))
       case A(a, b) => "(" + a.mkStringUnambiguous + ")" + "\\;" + List.mkString(b, "\\;", wrapParenthesesIfNeeded(_.mkStringUnambiguous))
       case V(name) => longNamesAreText(name)
@@ -100,6 +106,7 @@ object Main {
       subexprs.zip(interstrings.tail).foldLeft(interstrings.head)((prevs, news) => prevs + news._1.mkStringUnambiguous + news._2)
     }
 
+    // Expands all notations and transform multi-variables lambdas into multiple lambdas.
     def expand: LambdaTerm = this match {
       case L(Nil(), b) => b.expand
       case L(Cons(x, xs), b) => L(List(x), L(xs, b).expand)
@@ -112,19 +119,21 @@ object Main {
       case N(l, _, builder) => builder(l.map(_.expand))
     }
     
+    // Expands only the notations.
     def expandNames: LambdaTerm = this match {
       case L(vars, b) => L(vars, b.expandNames)
       case A(a, b) => A(a.expandNames, b.map((el: LambdaTerm) => el.expandNames))
       case V(name) => this
       case N(l, _, builder) => builder(l.map(_.expandNames))
     }
-    
-    
+
+    // Applies a beta-reduction to the lambda term.
     def beta: LambdaTerm = this match {
       case A(L(Nil(), body), Nil()) => body
       case A(L(Cons(x, xs), body), Cons(arg, args)) =>
         A(L(xs, body.substitute(x, arg)), args).beta
-      case A(a: A, args) => A(a.beta, args)
+      case A(a: A, args) => 
+        A(a.beta, args)
       case A(v: V, args) => 
       oneStepConversion[LambdaTerm](args, (l: LambdaTerm) => {
         val r = l.beta
@@ -140,6 +149,7 @@ object Main {
       case _ => error(this)
     }
     
+    // Renders the lambda term into a scala-like program.
     def mkStringScala: String = this match {
       case L(Nil(), b) => b.mkStringScala
       case L(Cons(x, l), b) => "(" + x.mkStringScala + ": \\text{Any}) \\Rightarrow " + L(l, b).mkStringScala
@@ -147,11 +157,13 @@ object Main {
       case A(a, b) => a.mkStringScala + "(" + List.mkString(b, ")(", (l: LambdaTerm) => l.mkStringScala) + ")"
       case V(name) => name
     }
+    
+    // Html wrapping routines for the above rendering functions
     def html: String = "\\(" + this.mkString + "\\)"
     def htmlUnambiguous: String = "\\(" + this.mkStringUnambiguous + "\\)"
     def htmlScala: String = "\\(" + this.mkStringScala + "\\)"
     
-      
+    // Substitute the variable x by t in the lambda term.
     def substitute(x: V, t: LambdaTerm): LambdaTerm =
       this match {
       case V(y) if y == x.name => t
@@ -162,12 +174,24 @@ object Main {
         N(l.map(_.substitute(x, t)), interstrings, builder)
     }
     
+    // We can do something like a(b) where a and b are two lambda terms
+    // to build an application.
     def apply(l: LambdaTerm) = A(this, List(l))
     def apply(l: List[LambdaTerm]) = A(this, l)
+    // Special notation naming a lambda term without argument.
     def named(name: String) = N(Nil(), List("\\text{"+name+"}"), _ => this)
   }
   // Abstraction / Function
-  case class L(params: List[V], body: LambdaTerm) extends LambdaTerm
+  case class L(params: List[V], body: LambdaTerm) extends LambdaTerm {
+    def toCustomString(prefix: String,
+                       variableInfix: String,
+                       beforeBody: String,
+                       afterBody: String,
+                       recurse: LambdaTerm => String) = {
+      prefix + List.mkString(params, variableInfix, (s: V) => recurse(s)) +
+      beforeBody + recurse(body) + afterBody
+    }
+  }
   
   // Application
   case class A(lambda: LambdaTerm, arguments: List[LambdaTerm]) extends LambdaTerm
@@ -176,13 +200,16 @@ object Main {
   case class V(name: String) extends LambdaTerm
   
   // Notation
+  // Displays a list of subsymbols interleaved with strings.
   case class N(subsymbols: List[LambdaTerm], interstrings: List[String], builder: List[LambdaTerm] => LambdaTerm) extends LambdaTerm {
     require(interstrings.length == subsymbols.length + 1)
     def build(): LambdaTerm = builder(subsymbols)
   }
 
+  // Very useful implicit conversion from a String to a variable name.
   implicit def toV(name: String): V = V(name)
 
+  // Function to align webtrees using a table.
   def align(l: List[List[WebTree]]): Element =
     <.table(
       <.tbody(
@@ -191,28 +218,35 @@ object Main {
         )
       )
     )
-    
+  
+  // The beta arrow
   val b_=> = " \\(\\Rightarrow_\\beta\\) "
   
+  // Church booleans
   val ltrue = L(List("x", "y"), "x") named "true"
   val lfalse = L(List("x", "y"), "y") named "false"
     
+  // Church pair
   def pair(a: LambdaTerm, b: LambdaTerm) =
     N(List(a, b), List("(", ",", ")"), l => L(List("f"), A("f", l)))
-    
+  
+  // Church pair extraction 1
   def _1(p: LambdaTerm) =
     N(List(p), List("", "_1"), l => A(l.head, List(ltrue.expandNames)))
 
+  // Church pair extraction 2
   def _2(p: LambdaTerm) =
     N(List(p), List("", "_2"), l => A(l.head, List(lfalse.expandNames)))
-    
+  
+  // Church empty list
   def lNil =
     N(List(), List("\\text{Nil}"), l => L(List("m", "n"), "m"))
-    
+  
+  // Church cons
   def lCons(p: LambdaTerm, q: LambdaTerm) =
     N(List(p, q), List("\\text{Cons}(", ",",")"), l => L(List("m", "n"), A("n", List(pair(l(0), l(1))))))
     
-    
+  // Church numbers
   def lNum(i: Int): LambdaTerm = {
     require(i >= 0)
     if(i == 0) {
@@ -222,12 +256,15 @@ object Main {
     }
   }
   
+  // Church addition
   def lPlus(p: LambdaTerm, q: LambdaTerm) = {
     N(List(p, q), List("", "+", ""), l => L(List("f", "x"), A(l(0), List("f", A(l(1), List("f", "x"))))))
   }
   
+  // Church-like error (used in beta reduction when no reduction can be made)
   def error(l: LambdaTerm): LambdaTerm = N(List(l), List("Cannot convert (", ")"), p => p.head)
 
+  // Checking if a church term is an error
   def isError(l: LambdaTerm) = l match {
     case N(_, Cons("Cannot convert (", _), _) => true
     case _ => false
@@ -243,20 +280,27 @@ object Main {
     }
   }
   
+  // A term used in the slides.
   def mkZ: LambdaTerm =
     N(Nil(), List("mkZ"), l => 
       L(List("list"), A("list", List(lNil, L(List("p"), lCons("Z", A(mkZ, List(_2("p")))))))))
 
+  // The infinite combinator
   val w = A(L(List("x"), A("x", List("x"))), List(L(List("x"), A("x", List("x")))))
+  
+  // The Y combinator using F
   val ycombinatorTotal = L(List("F"), A(L(List("x"), A("F", List(A("x", List("x"))))), List(L(List("x"), A("F", List(A("x", List("x"))))))))
+  
+  // The Y combinator on any function
   def ycombinator(F: LambdaTerm): N = 
     N(List(F), List("Y_{", "}"), l => A(ycombinatorTotal, List(l.head)).beta)
   
+  // A lambda term used in the slide again.
   def mkZF: LambdaTerm = 
     L(List("self"),
       L(List("list"), A("list", List(lNil, L(List("p"), lCons("Z", A("self", List(_2("p")))))))))
-    
-  def main = {
+      
+  def slides = {
     val example1 = A(L(List("x","y"),"x"),List(V("a"),V("b")))
     val app = A("f", List("x"))
     val lam = L(List("x"), "M")
@@ -267,18 +311,9 @@ object Main {
     val lambdacalculus = "\\(\\lambda\\)-calculus"
     val can_do = " can do: "
     
-    
-    
-    //val pair = L(List("f"), A("f", List("M", "N")))
-    val first = _1("P")
-    val second = _2("P")
     val pfirst = _1(pair("M", "N"))
     val psecond = _2(pair("M", "N"))
-    
-    WebPage(
-      <.div(
-        <.div(^.classes := "reveal",
-          <.div(^.classes := "slides",
+    <.div(^.classes := "slides",
 <.section(<.h2("Lambda Calculus and LISP", ^.classes := "centeredtitle")),
 <.section(<.h2("Lambda Calculus: First Functional Language"),
   //^.background := slideColor,
@@ -349,7 +384,7 @@ object Main {
   <.p("So instead of 'if (b) M N' we just write (b M N)")
 ),
 <.section(
-  <.h2(lambdacalculus + can_do + "Integers / addition"),
+  <.h2(lambdacalculus + can_do + "Integers, addition"),
   <.p("A number defines how many times to compose a function with itself."),
   <.p("Define"), {
     val zero = lNum(0)
@@ -367,7 +402,7 @@ object Main {
   },
   <.p("We can define addition now using function composition:"),
   lPlus("P", "Q").html + "="+ lPlus("P", "Q").expandNames.html,
-  <.p("It works ! For example:"),
+  <.p("It works. For example:"),
   {
     betacompute(A(lPlus(lNum(1), lNum(2)), List("F", "X"))) + " = " + A(lNum(3), List("F", "X")).html
   }
@@ -377,7 +412,6 @@ object Main {
   <.p("Pair is something from which we can get the first and the second element"),
   <.p("Define"), {
     val p = pair("M", "N")
-    
     align(List(
       List(p.html, "=", p.expandNames.html),
       List(_1("p").html, "=",_1("p").expandNames.html),
@@ -405,7 +439,7 @@ object Main {
     ))
   },
   <.p("Why does this work?"),
-  betacompute(A(lNil, List("M", "N"))),
+  betacompute(A(lNil, List("M", L(List("p"), _1("p"))))),
   <.br(),
   betacompute(A(lCons("P", "Q"), List("M", L(List("p"), _1("p")))), 3),
   <.p("Cons is like a pair, but takes m as argument, too, to fit along with Nil.")
@@ -461,18 +495,20 @@ def h = (x: Any) => P(h(Q(x)),x)"""
   <.p("So " + mkZ.html + " can be defined as " + ycombinator("F").html + "which in this case is:"),
   <.p(
   L(List("x"), A(mkZF, List(A("x", List("x"))))).html,<.br(),
-  "&nbsp;" + L(List("x"), A(mkZF, List(A("x", List("x"))))).html)
+  "\\(\\;\\)" + L(List("x"), A(mkZF, List(A("x", List("x"))))).html)
 )
           )
+}
+
+  def main = {
+    WebPage(
+      <.div(
+        <.div(^.classes := "reveal",
+          slides
         )), css)
   }
   
-  def expected(title: String): Boolean = {
-    title == "Introduction"
-  }
-  
-  def javascript = """
-  $.getScript("/assets/js/reveal.js", function() {
+  def jsReveal = """$.getScript("/assets/js/reveal.js", function() {
     var i = -1;
     $("section").each(function(index, e) { if($(e).hasClass("present")) {i = index; console.log("i = " + index); } });
     var options = {
@@ -486,16 +522,6 @@ def h = (x: Any) => P(h(Q(x)),x)"""
     }
     Reveal.slide( i, 0, 0 );
   });
-  
-  if($("#katexcsslink").length == 0) {
-    $("head").append($('<link id="katexcsslink" rel="stylesheet" media="screen" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.css">'))
-  }
-  $.getScript("https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.js", function() {
-    $.getScript("https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/contrib/auto-render.min.js", function() { 
-      renderMathInElement(document.getElementById("htmlDisplayerDiv"));
-    })
-  })
-
   if($("#revealcsslink").length == 0) {
     $("head").append($('<link id="revealcsslink" rel="stylesheet" media="screen" href="/assets/css/reveal.css">'))
   }
@@ -503,6 +529,50 @@ def h = (x: Any) => P(h(Q(x)),x)"""
   if($("#themewebbuilder").length == 0) {
     $("head").append($('<link id="themewebbuilder" rel="stylesheet" media="screen"/>'))
   }
+  
   $("#themewebbuilder").attr("href", "/assets/css/theme/simple.css");
   """
+  
+  def jsKaTeX = """if($("#katexcsslink").length == 0) {
+    $("head").append($('<link id="katexcsslink" rel="stylesheet" media="screen" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.css">'))
+  }
+  $.getScript("https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.js", function() {
+    $.getScript("https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/contrib/auto-render.min.js", function() { 
+      renderMathInElement(document.getElementById("htmlDisplayerDiv"));
+    })
+  });"""
+  
+  def jsReponsiveVoice = """
+  if($("#responsivevoice").length == 0) {
+    $("head").append($('<script id="responsivevoice" src="https://code.responsivevoice.org/responsivevoice.js"/>'))
+  }
+  var paragraphs = function(elements) {
+    return elements.find("*").contents().filter(function() { return this.nodeType === 3; }).map(function(index, elem) { return elem.textContent; })
+  }
+  
+  var read = function(elem) {
+    paragraphs($(elem)).each(function(index, text) { responsiveVoice.speak(text) })
+  }
+  
+  var $target = $("div.reveal > div.slides section");
+  var current = null
+  
+  /*$target.each(function(index, elem) {
+    var observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+          if (mutation.attributeName === "class") {
+              var attributeValue = $(mutation.target).prop(mutation.attributeName);
+              if (attributeValue == ("present") && mutation.target != current){
+                  read(mutation.target);
+                  current = mutation.target;
+              }
+          }
+      });
+    });
+    observer.observe(elem,  { attributes: true });
+  })*/
+  
+  /*setTimeout( function() { read("section.present") }, 3000 )*/"""
+  
+  def javascript = jsReveal + jsKaTeX /* + jsResponsiveVoice */
 }
