@@ -28,6 +28,8 @@ object Main {
       }
     case Nil() => None()
   }
+  
+  val highlightclass = "highlightedElement"
 
   // The css of the webpage.
   val css = Style(
@@ -62,6 +64,22 @@ object Main {
       ^.width:= "50px",
       ^.css("float"):= "right",
       ^.border := "none"
+    ),
+    "." + highlightclass := (
+      ^.outline := "1px solid red",
+      ^.background := "#FDD"
+    ),
+    ".subtitlewrapper" := (
+      ^.position := "absolute",
+      ^.display := "none",
+      ^.bottom := "5px"
+    ),
+    ".subtitle" := (
+      ^.position := "relative",
+      ^.left := "-50%",
+      ^.backgroundColor := "black",
+      ^.color := "white",
+      ^.padding := "5px"
     )
   )
   
@@ -300,10 +318,55 @@ object Main {
     L(List("self"),
       L(List("list"), A("list", List(lNil, L(List("p"), lCons("Z", A("self", List(_2("p")))))))))
       
-  def voiceoff(s: String) = 
-    <.span(^.display := "none", ^.classes := "hiddenvoice", s)
+  def say(s: String) = 
+    <.span(^.display := "none", ^.classes := "action hiddenvoice", s)
+
+  def highlighton(selector: String) =
+    <.span(^.display := "none", ^.classes := "action highlighton", selector)
+
+  def highlightoff(selector: String) =
+    <.span(^.display := "none", ^.classes := "action highlightoff", selector)
   
+  def highlightonafter(selector: String, delayms: Int) = {
+    <.span(^.display := "none", ^.classes := "action highlighton delay", selector, ^("delay") := delayms.toString)
+  }
+  
+  case class Sayable(t: WebTree) {
+    def say(s: List[String])(implicit state: IntGenerator): Element = {
+      val kt = t.asInstanceOf[Element]
+      val (newt, newId): (Element, String) = kt.properties.find((property: WebAttribute) => property.attributeName == "id") match {
+        case None() =>
+          val id = nextId
+          (kt(^.id := id), id)
+        case Some(attr) => (kt, attr.attributeName)
+      }
+      newt(
+        highlighton("#" + newId),
+        s.map(Main.say),
+        highlightoff("#" + newId)
+      )
+    }
+    
+    def say(s: String)(implicit state: IntGenerator): Element = {
+      say(List(s))
+    }
+  }
+  implicit def toSayable(t: WebTree) = Sayable(t)
+  
+  case class IntGenerator(var id: Int)
+  
+  def nextId(implicit state: IntGenerator) = {
+    state.id += 1
+    "ref" + state.id
+  }
+  
+  def slide = <.section(
+    <.span(^.classes := "subtitlewrapper",
+      <.span(^.classes := "subtitle")))
+
   def slides = {
+    implicit val state = IntGenerator(0)
+  
     val example1 = A(L(List("x","y"),"x"),List(V("a"),V("b")))
     val app = A("f", List("x"))
     val lam = L(List("x"), "M")
@@ -317,17 +380,19 @@ object Main {
     val pfirst = _1(pair("M", "N"))
     val psecond = _2(pair("M", "N"))
     <.div(^.classes := "slides",
-<.section(<.h2("Lambda Calculus and LISP", ^.classes := "centeredtitle")),
-<.section(<.h2("Lambda Calculus: First Functional Language"),
-  //^.background := slideColor,
-  voiceoff("Lambda calculus is the first functional language. It was introduced by Alonzo Church in 1932."),
+slide(<.h2("Lambda Calculus and LISP", ^.classes := "centeredtitle")),
+slide(<.h2("Lambda Calculus: First Functional Language"),
   <.ul(
-    <.li("""Church, A., 1932, “A set of postulates for the foundation of logic”, """, <.i("Annals of Mathematics"), """(2nd Series), 33(2): 346–366.""")),
-  <.p("Example"),
+    <.li("""Church, A., 1932, “A set of postulates for the foundation of logic”, """, <.i("Annals of Mathematics"), """(2nd Series), 33(2): 346–366.""") say List("Lambda calculus is the first functional language.", "It was introduced by Alonzo Church in 1932.")
+  ),
+  <.p("Example") say "If you already know scala, you can consider the following equivalent:",
   <.table(^.classes := "scalalambda",
     <.tbody(
       <.tr(<.th("Scala Equivalent"), <.th("Lambda calculus")),
-      <.tr(<.td(example1.htmlScala),<.td(example1.html))
+      <.tr(<.td(example1.htmlScala)
+        say "This is a currified scala function taking two arguments, applied to a and b."
+      ,<.td(example1.html)
+        say "This is the equivalent in Lambda calculus.")
     )
   ),
   <.br(),
@@ -340,7 +405,7 @@ object Main {
     )
   )
 ),
-<.section(
+slide(
   <.h2("The main rule: argument substitution ("+betareduction+")"),
   <.p("Functions have one argument. We use abbreviations such as these:"),
   align(List(
@@ -369,7 +434,7 @@ object Main {
     e.html + b_=> + e2.htmlUnambiguous + b_=> + e3.htmlUnambiguous})
 ),
 <.section(^.classes := "verticalsplit",
-<.section(
+slide(
   <.h2(lambdacalculus + can_do + "Booleans"),
   <.p("Given hypothetical if statement 'if (b) M N' represent Boolean values as the functions corresponding to “if (b)” code fragment"),
   align(List(
@@ -387,7 +452,7 @@ object Main {
   },
   <.p("So instead of 'if (b) M N' we just write (b M N)")
 ),
-<.section(
+slide(
   <.h2(lambdacalculus + can_do + "Integers, addition"),
   <.p("A number defines how many times to compose a function with itself."),
   <.p("Define"), {
@@ -411,7 +476,7 @@ object Main {
     betacompute(A(lPlus(lNum(1), lNum(2)), List("F", "X"))) + " = " + A(lNum(3), List("F", "X")).html
   }
 )),
-<.section(
+slide(
   <.h2(lambdacalculus + can_do + "Pairs"),
   <.p("Pair is something from which we can get the first and the second element"),
   <.p("Define"), {
@@ -427,7 +492,7 @@ object Main {
   <.br(),
   betacompute(psecond)
 ),
-<.section(
+slide(
   <.h2(lambdacalculus + can_do + "Lists"),
   <.p("A list is something we can match on and deconstruct if it is not empty:"),
   <.pre("""list match {
@@ -448,7 +513,7 @@ object Main {
   betacompute(A(lCons("P", "Q"), List("M", L(List("p"), _1("p")))), 3),
   <.p("Cons is like a pair, but takes m as argument, too, to fit along with Nil.")
 ),
-<.section(
+slide(
   <.h2("Returning pair (tail,tail) if list non-empty, else Z"),
   <.pre(<.code(^.classes := "Scala", """list match {
   case Nil => Z
@@ -462,7 +527,7 @@ object Main {
     l.expandNames.html
   )
 },
-<.section(
+slide(
   <.h2("Computation that takes any number of steps"),
   <.p(w.html + b_=> + w.beta.html + b_=> + "... loops"),
   <.p("More usefully :"),
@@ -485,7 +550,7 @@ def h = (x: Any) => P(h(Q(x)),x)"""
                  hFFF.html + b_=> + "...")))
   }
 ),
-<.section(
+slide(
   <.h2("Replace all list elements by Z: List(1,2,3) \\(\\to\\) List(Z,Z,Z)"),
   <.pre("""def mkZ(list) = list match {
   case Nil => Nil
@@ -550,25 +615,50 @@ def h = (x: Any) => P(h(Q(x)),x)"""
   if($("#responsivevoice").length == 0) {
     $("head").append($('<script id="responsivevoice" src="https://code.responsivevoice.org/responsivevoice.js"/>'))
   }
+  
+  var defaultVoice = "US English Male"
   var paragraphs = function(elements) {
-    return elements.find(".hiddenvoice").map(function(i, e) { return $(e).text(); })
+    return elements.find(".action").toArray()
+  }
+  
+  var process = function(remainingActions, elem) {
+    if(remainingActions.length != 0) {
+      var first = $(remainingActions.shift());
+      var text = first.text()
+      if(first.hasClass("hiddenvoice")) {
+        $(elem).find(".subtitle").text(text)
+        $(elem).find(".subtitlewrapper").css('display', 'inline-block')
+        responsiveVoice.speak(text, defaultVoice, {onend: function() {
+          $(elem).find(".subtitle").text("");
+          $(elem).find(".subtitlewrapper").css('display', 'none');
+          process(remainingActions, elem)
+        }})
+      } else if(first.hasClass("highlighton")) {
+        $(text).addClass(""""+highlightclass+"""")
+        process(remainingActions, elem)
+      } else if(first.hasClass("highlightoff")) {
+        $(text).removeClass(""""+highlightclass+"""")
+        process(remainingActions, elem)
+      }
+    }
   }
   
   var read = function(elem) {
-    paragraphs($(elem)).each(function(index, text) { responsiveVoice.speak(text) })
+    var actions = paragraphs($(elem))
+    console.log("reading aloud ", elem)
+    process(actions, elem)
   }
   
   var $target = $("div.reveal > div.slides section");
   var current = null
-  
-  responsiveVoice.setDefaultVoice("Google UK English Male");
-  
+
   $target.each(function(index, elem) {
     var observer = new MutationObserver(function(mutations) {
       mutations.forEach(function(mutation) {
           if (mutation.attributeName === "class") {
               var attributeValue = $(mutation.target).prop(mutation.attributeName);
               if (attributeValue == ("present") && mutation.target != current){
+                  responsiveVoice.cancel();
                   read(mutation.target);
                   current = mutation.target;
               }
@@ -577,8 +667,10 @@ def h = (x: Any) => P(h(Q(x)),x)"""
     });
     observer.observe(elem,  { attributes: true });
   })
+    
+  responsiveVoice.setDefaultVoice(defaultVoice);
   
-  setTimeout( function() { read("section.present") }, 3000 )"""
+  //setTimeout( function() { read("section.present") }, 3000 )"""
   
   def javascript = jsReveal + jsKaTeX + jsReponsiveVoice 
 }
