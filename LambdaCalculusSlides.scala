@@ -300,6 +300,9 @@ object Main {
     L(List("self"),
       L(List("list"), A("list", List(lNil, L(List("p"), lCons("Z", A("self", List(_2("p")))))))))
       
+  def voiceoff(s: String) = 
+    <.span(^.display := "none", ^.classes := "hiddenvoice", s)
+  
   def slides = {
     val example1 = A(L(List("x","y"),"x"),List(V("a"),V("b")))
     val app = A("f", List("x"))
@@ -317,6 +320,7 @@ object Main {
 <.section(<.h2("Lambda Calculus and LISP", ^.classes := "centeredtitle")),
 <.section(<.h2("Lambda Calculus: First Functional Language"),
   //^.background := slideColor,
+  voiceoff("Lambda calculus is the first functional language. It was introduced by Alonzo Church in 1932."),
   <.ul(
     <.li("""Church, A., 1932, “A set of postulates for the foundation of logic”, """, <.i("Annals of Mathematics"), """(2nd Series), 33(2): 346–366.""")),
   <.p("Example"),
@@ -547,7 +551,7 @@ def h = (x: Any) => P(h(Q(x)),x)"""
     $("head").append($('<script id="responsivevoice" src="https://code.responsivevoice.org/responsivevoice.js"/>'))
   }
   var paragraphs = function(elements) {
-    return elements.find("*").contents().filter(function() { return this.nodeType === 3; }).map(function(index, elem) { return elem.textContent; })
+    return elements.find(".hiddenvoice").map(function(i, e) { return $(e).text(); })
   }
   
   var read = function(elem) {
@@ -557,7 +561,9 @@ def h = (x: Any) => P(h(Q(x)),x)"""
   var $target = $("div.reveal > div.slides section");
   var current = null
   
-  /*$target.each(function(index, elem) {
+  responsiveVoice.setDefaultVoice("Google UK English Male");
+  
+  $target.each(function(index, elem) {
     var observer = new MutationObserver(function(mutations) {
       mutations.forEach(function(mutation) {
           if (mutation.attributeName === "class") {
@@ -570,9 +576,9 @@ def h = (x: Any) => P(h(Q(x)),x)"""
       });
     });
     observer.observe(elem,  { attributes: true });
-  })*/
+  })
   
-  /*setTimeout( function() { read("section.present") }, 3000 )*/"""
+  setTimeout( function() { read("section.present") }, 3000 )"""
   
-  def javascript = jsReveal + jsKaTeX /* + jsResponsiveVoice */
+  def javascript = jsReveal + jsKaTeX + jsReponsiveVoice 
 }
