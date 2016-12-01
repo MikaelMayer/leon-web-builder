@@ -320,6 +320,14 @@ object Main {
       
   def say(s: String) = 
     <.span(^.display := "none", ^.classes := "action hiddenvoice", s)
+    
+  def sayOn(s: String, selector: String) = {
+    List(
+      highlighton(selector),
+      say(s),
+      highlightoff(selector)
+    )
+  }
 
   def highlighton(selector: String) =
     <.span(^.display := "none", ^.classes := "action highlighton", selector)
@@ -396,12 +404,14 @@ slide(<.h2("Lambda Calculus: First Functional Language"),
     )
   ),
   <.br(),
-  <.p("Lambda calculus has only variables (x,y,a,b,…) and these two constructs:"),
+  <.p("Lambda calculus has only variables (x,y,a,b,…) and these two constructs:")
+  say "Lambda calculus is a very simple programming language with variables and these two constructs:"
+  ,
   <.table(^.classes := "scalalambda",
     <.tbody(
       <.tr(<.th(""), <.th("Scala Equivalent"), <.th("Lambda calculus")),
-      <.tr(<.td("Application"), <.td(app.htmlScala),<.td(app.html)),
-      <.tr(<.td("Abstraction"), <.td(lam.htmlScala),<.td(lam.html))
+      <.tr(<.td("Application"), <.td(app.htmlScala),<.td(app.html) say List("The application, where you can think of f typically as a machine or a function","and x as an input for this function", "so that f x is the result of applying f to x.")),
+      <.tr(<.td("Abstraction"), <.td(lam.htmlScala),<.td(lam.html) say List("The abstraction allows you to create your own machines or functions.", "Take a variable x, wrap it with a lambda on the left and a period on the right,", "and whatever you would like to do with x, put it instead of M.") )
     )
   )
 ),
