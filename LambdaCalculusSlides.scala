@@ -14,6 +14,26 @@ object Main {
   val notationArrow = ("", ",", "\\rightarrow ", "")
   val notation = notationLambda // notationLambda, notationArrow
   val height = 600
+  val language = "en"
+  val translations = Map(
+    "en" -> Map(
+      "speaker" ->  "US English Male"
+      
+    ),
+    "fr" -> Map(
+      "speaker" -> "French Female"
+    )
+  )
+  
+  case class Translator(language: String) {
+    def apply(key: String) = {
+      translations.getOrElse(language, translations("en")).getOrElse(key, key)
+    }
+  }
+  val t = Translator(language)
+  
+  val defaultVoice = t("speaker")
+  
   
   // Applies p once on the list, where it is defined.
   def oneStepConversion[T](l: List[T], p: T => Option[T]): Option[List[T]] = l match {
@@ -66,20 +86,29 @@ object Main {
       ^.border := "none"
     ),
     "." + highlightclass := (
-      ^.outline := "1px solid red",
-      ^.background := "#FDD"
+      //^.outline := "1px solid red",
+      ^.fontWeight := "bold",
+      ^.color := "darkred",
+      ^.background := "#EEE"
     ),
     ".subtitlewrapper" := (
       ^.position := "absolute",
       ^.display := "none",
-      ^.bottom := "5px"
+      ^.bottom := "5px",
+      ^.width := "100%"
     ),
     ".subtitle" := (
       ^.position := "relative",
       ^.left := "-50%",
-      ^.backgroundColor := "black",
-      ^.color := "white",
+      ^.backgroundColor := "rgba(128, 128, 128, 0.2)",
+      ^.color := "black",
       ^.padding := "5px"
+    ),
+    ".highlighton, .highlightoff" := (
+      ^.display := "none"
+    ),
+    ".hiddenvoice" := (
+      ^.display := "none"
     )
   )
   
@@ -318,26 +347,52 @@ object Main {
     L(List("self"),
       L(List("list"), A("list", List(lNil, L(List("p"), lCons("Z", A("self", List(_2("p")))))))))
       
-  def say(s: String) = 
-    <.span(^.display := "none", ^.classes := "action hiddenvoice", s)
+  def subtitle(s: String) = 
+    <.span(^.classes := "action hiddenvoice", s)
+  
+  def subtitle(s: List[String]): WebTree =
+    s.map(subtitle)
+  
+  @ignore
+  def subtitle(s: String*): WebTree =
+    subtitle(varargToList(s))
     
-  def sayOn(s: String, selector: String) = {
-    List(
-      highlighton(selector),
-      say(s),
-      highlightoff(selector)
-    )
+  def say(s: String): WebTree = {
+    subtitle(s)
+  }
+  
+  def say(s: List[String]): WebTree = {
+    s.map(say)
+  }
+  
+  @ignore
+  def say(s: String*): WebTree = {
+    say(varargToList(s))
+  }
+    
+  def sayOn(s: List[String], selector: String) = {
+    List(highlighton(selector)) ++
+    List(say(s)) ++
+    List(highlightoff(selector))
   }
 
-  def highlighton(selector: String) =
+  def highlighton(selector: String) = {
     <.span(^.display := "none", ^.classes := "action highlighton", selector)
+  }
 
-  def highlightoff(selector: String) =
+  def highlightoff(selector: String) = {
     <.span(^.display := "none", ^.classes := "action highlightoff", selector)
+  }
+  
+  def nextSlide() = {
+    <.span(^.display := "none", ^.classes := "action nextslide")
+  }
   
   def highlightonafter(selector: String, delayms: Int) = {
     <.span(^.display := "none", ^.classes := "action highlighton delay", selector, ^("delay") := delayms.toString)
   }
+  
+  def proxySay(s: List[String]) = say(s)
   
   case class Sayable(t: WebTree) {
     def say(s: List[String])(implicit state: IntGenerator): Element = {
@@ -349,12 +404,26 @@ object Main {
         case Some(attr) => (kt, attr.attributeName)
       }
       newt(
-        highlighton("#" + newId),
-        s.map(Main.say),
-        highlightoff("#" + newId)
+      highlighton("#" + newId),
+      proxySay(s),
+      highlightoff("#" + newId)
       )
     }
     
+    def highlightOn(selector: String): WebTree = {
+      t match {
+        case e: Element =>
+          e(highlighton(selector))
+      }
+    }
+    
+    def highlightOff(selector: String): WebTree = {
+      t match {
+        case e: Element =>
+          e(highlightoff(selector))
+      }
+    }
+
     def say(s: String)(implicit state: IntGenerator): Element = {
       say(List(s))
     }
@@ -363,14 +432,79 @@ object Main {
   
   case class IntGenerator(var id: Int)
   
+  /*case class ActionGenerator(var actions: List[WebTree]) {
+    def pop(): List[WebTree] = {
+      val res = actions.reverse
+      actions = Nil()
+      res
+    }
+  }*/
+  /*
+  def actionPop()(implicit state: ActionGenerator): WebTree = {
+    val res = state.actions.reverse
+    state.actions = Nil()
+    res
+  }*/
+  
   def nextId(implicit state: IntGenerator) = {
     state.id += 1
     "ref" + state.id
   }
   
-  def slide = <.section(
-    <.span(^.classes := "subtitlewrapper",
-      <.span(^.classes := "subtitle")))
+  def slide(l: List[WebTree]): Element = {
+    <.section(
+      <.span(^.classes := "subtitlewrapper",
+        <.div(^.classes := "subtitle"
+        )), // Will be populated later.
+      l: WebTree
+    )(nextSlide())
+  }
+  
+  @ignore
+  def slide(elems: WebTree*): Element = {
+    slide(varargToList(elems))
+  }
+  
+  def collectActions(input: WebElement): List[WebElement] = {
+    input match {
+      case Element("span", _, 
+      Cons(WebAttribute("class" , "action highlighton"), _), _) =>
+      List(input)
+      case Element("span", _, 
+      Cons(WebAttribute("class" , "action highlightoff"), _), _) =>
+      List(input)
+      case Element("span", _, 
+      Cons(WebAttribute("class" , "action hiddenvoice"), _), _) =>
+      List(input)
+      case Element("span", _, 
+      Cons(WebAttribute("class" , "action nextslide"), _), _) =>
+      List(input)
+      case Element(_, sons, _, _) => collectActions(sons)
+      case  _ => Nil()
+    }
+  }
+  
+  def collectActions(input: List[WebElement]): List[WebElement] = {
+    input.flatMap(collectActions)
+  }
+  
+  def regroupSubtitles(s: WebElement): WebElement = {
+    s match {
+      case Element("section",
+        Cons(Element("span",
+          Cons(Element("div", sons3, attrs3, styles3), n),
+          attrs2, styles2),
+        remaining), attrs, styles) =>
+        Element("section",
+        Cons(Element("span",
+          Cons(Element("div", sons3 ++ collectActions(remaining), attrs3, styles3), n),
+          attrs2, styles2),
+        remaining), attrs, styles)
+      case Element(tag, sons, attrs, styles) =>
+        Element(tag, sons.map(regroupSubtitles), attrs, styles)
+      case _ => s
+    }
+  }
 
   def slides = {
     implicit val state = IntGenerator(0)
@@ -388,17 +522,17 @@ object Main {
     val pfirst = _1(pair("M", "N"))
     val psecond = _2(pair("M", "N"))
     <.div(^.classes := "slides",
-slide(<.h2("Lambda Calculus and LISP", ^.classes := "centeredtitle")),
-slide(<.h2("Lambda Calculus: First Functional Language"),
+slide(List(<.h2("Lambda Calculus and LISP", ^.classes := "centeredtitle")), say("Welcome to this introductory course to Lambda Calculus", "Knowing Lambda Calculus clarifies the essence of the notion of a functional language.", "We will explain LISP in a second part.", "Let's start with Lambda Calculus")),
+slide(<.h2("Lambda Calculus: First Functional Language") say "Lambda calculus is the first functional language.",
   <.ul(
-    <.li("""Church, A., 1932, “A set of postulates for the foundation of logic”, """, <.i("Annals of Mathematics"), """(2nd Series), 33(2): 346–366.""") say List("Lambda calculus is the first functional language.", "It was introduced by Alonzo Church in 1932.")
+    <.li(<.span("Church, A., 1932") say "It was introduced by Alonzo Church in 1932.", """, “A set of postulates for the foundation of logic”, """, <.i("Annals of Mathematics"), """(2nd Series), 33(2): 346–366.""")
   ),
   <.p("Example") say "If you already know scala, you can consider the following equivalent:",
   <.table(^.classes := "scalalambda",
     <.tbody(
-      <.tr(<.th("Scala Equivalent"), <.th("Lambda calculus")),
-      <.tr(<.td(example1.htmlScala)
-        say "This is a currified scala function taking two arguments, applied to a and b."
+      <.tr(<.th("Scala equivalent", ^.id := "hdScala1"), <.th("Lambda calculus")),
+      <.tr(<.td(example1.htmlScala) highlightOn "#hdScala1"
+        say "This is a curried Scala function taking two arguments, applied to a and b." highlightOff "#hdScala1"
       ,<.td(example1.html)
         say "This is the equivalent in Lambda calculus.")
     )
@@ -410,8 +544,8 @@ slide(<.h2("Lambda Calculus: First Functional Language"),
   <.table(^.classes := "scalalambda",
     <.tbody(
       <.tr(<.th(""), <.th("Scala Equivalent"), <.th("Lambda calculus")),
-      <.tr(<.td("Application"), <.td(app.htmlScala),<.td(app.html) say List("The application, where you can think of f typically as a machine or a function","and x as an input for this function", "so that f x is the result of applying f to x.")),
-      <.tr(<.td("Abstraction"), <.td(lam.htmlScala),<.td(lam.html) say List("The abstraction allows you to create your own machines or functions.", "Take a variable x, wrap it with a lambda on the left and a period on the right,", "and whatever you would like to do with x, put it instead of M.") )
+      <.tr(<.td("Application"), <.td(app.htmlScala),<.td(app.html) say List("The application, where you can think of f typically as a machine or a function","and x as an input for this function", "so that f x is the result of giving x to f.")),
+      <.tr(<.td("Abstraction"), <.td(lam.htmlScala),<.td(lam.html) say List("The abstraction allows you to create your own machines or functions.", "Take a variable x, wrap it with a lambda on the left and a period on the right,", "and whatever you would like to do with x, insert it in the M expression.") )
     )
   )
 ),
@@ -528,7 +662,7 @@ slide(
   <.pre(<.code(^.classes := "Scala", """list match {
   case Nil => Z
   case Cons(x,y) => (y,y)
-}"""))){
+}""")){
   val l = A("list", List("Z", L(List("p"), A(L(List("y"), pair("y", "y")), List(_2("p"))))))
   List[WebTree](
     <.p("Becomes nothing else but"),
@@ -536,7 +670,7 @@ slide(
     <.p("i.e."),
     l.expandNames.html
   )
-},
+}),
 slide(
   <.h2("Computation that takes any number of steps"),
   <.p(w.html + b_=> + w.beta.html + b_=> + "... loops"),
@@ -583,7 +717,7 @@ slide(
     WebPage(
       <.div(
         <.div(^.classes := "reveal",
-          slides
+          regroupSubtitles(slides)
         )), css)
   }
   
@@ -591,12 +725,19 @@ slide(
     var i = -1;
     $("section").each(function(index, e) { if($(e).hasClass("present")) {i = index; console.log("i = " + index); } });
     var options = {
-        slideNumber: true,
-        transition: 'convex' // default/none/fade/slide/convex/concave/zoom
+        width: "100%",
+        height: "100%",
+        margin: 0,
+        minScale: 1,
+        maxScale: 1,
+        slideNumber: false,
+        mouseWheel: true,
+        transition: 'none' // default/none/fade/slide/convex/concave/zoom
       }
     if(i == -1) {
       Reveal.initialize(options)
     } else {
+    
       Reveal.configure(options);
     }
     Reveal.slide( i, 0, 0 );
@@ -626,30 +767,42 @@ slide(
     $("head").append($('<script id="responsivevoice" src="https://code.responsivevoice.org/responsivevoice.js"/>'))
   }
   
-  var defaultVoice = "US English Male"
+  var defaultVoice = """" + defaultVoice + """"
   var paragraphs = function(elements) {
-    return elements.find(".action").toArray()
+    return elements.find(".subtitlewrapper .subtitle .action").toArray()
   }
   
   var process = function(remainingActions, elem) {
     if(remainingActions.length != 0) {
-      var first = $(remainingActions.shift());
-      var text = first.text()
-      if(first.hasClass("hiddenvoice")) {
-        $(elem).find(".subtitle").text(text)
+      var action = $(remainingActions.shift());
+      var text = action.text()
+      if(action.hasClass("hiddenvoice")) {
+        action.siblings().hide()
+        action.show()
         $(elem).find(".subtitlewrapper").css('display', 'inline-block')
-        responsiveVoice.speak(text, defaultVoice, {onend: function() {
-          $(elem).find(".subtitle").text("");
+        var todoatend = function() {
+          action.hide()
           $(elem).find(".subtitlewrapper").css('display', 'none');
+        }
+        
+        responsiveVoice.speak(text, defaultVoice, {
+          onerror: function() {
+            todoatend()
+          },
+          onend: function() {
+          todoatend()
           process(remainingActions, elem)
         }})
-      } else if(first.hasClass("highlighton")) {
+      } else if(action.hasClass("highlighton")) {
+        $("."""+highlightclass+"""").removeClass(""""+highlightclass+"""")
         $(text).addClass(""""+highlightclass+"""")
         process(remainingActions, elem)
-      } else if(first.hasClass("highlightoff")) {
+      } else if(action.hasClass("highlightoff")) {
         $(text).removeClass(""""+highlightclass+"""")
         process(remainingActions, elem)
-      }
+      }/* else if(action.hasClass("nextslide")) {
+        setTimeout(function() { Reveal.next() }, 1000)
+      }*/
     }
   }
   
@@ -677,10 +830,8 @@ slide(
     });
     observer.observe(elem,  { attributes: true });
   })
-    
-  responsiveVoice.setDefaultVoice(defaultVoice);
   
-  //setTimeout( function() { read("section.present") }, 3000 )"""
+  setTimeout( function() { read("section.present") }, 3000 )"""
   
   def javascript = jsReveal + jsKaTeX + jsReponsiveVoice 
 }
