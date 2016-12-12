@@ -12,16 +12,70 @@ object Main {
   // Display parameters
   val notationLambda = ("\\lambda ","", ".\\;","")
   val notationArrow = ("", ",", "\\rightarrow ", "")
-  val notation = notationLambda // notationLambda, notationArrow
+  val useLambdaNotation = true
+  val notation = if(useLambdaNotation)
+    notationLambda else notationArrow
+
   val height = 600
-  val language = "en"
+  val language = "fr"
   val translations = Map(
     "en" -> Map(
-      "speaker" ->  "US English Male"
+      "speaker" ->  "US English Male",
+      "cando" -> " can do: ",
+      "slide0title" -> "Lambda Calculus and LISP",
+      "slide0subt0" -> "Welcome to this introductory course to Lambda Calculus",
+      "slide0subt1" -> "Knowing Lambda Calculus clarifies the essence of the notion of a functional language.",
+      "slide0subt2" -> "We will explain LISP in a second part.",
+      "slide0subt3" -> "Let's start with Lambda Calculus",
+      "slide1title" -> "Lambda Calculus: First Functional Language",
+      "slide1subt0" -> "Lambda calculus is the first functional language.",
+      "slide1subt1" -> "It was introduced by Alonzo Church in 1932.",
+      "slide1example" -> "Example",
+      "slide1subt2" -> "If you already know scala, you can consider the following equivalent:",
       
+    "scalaequivalentHeader" -> "Scala equivalent",
+    "lambdacalculusHeader" -> "Lambda calculus",
+    "slide1subt3" -> "This is a curried Scala function taking two arguments, applied to a and b.",
+    "slide1subt4" -> "This is the equivalent in Lambda calculus.",
+    "slide1introlambda" -> "Lambda calculus has only variables (x,y,a,b,…) and these two constructs:",
+    "slide1subt5" -> "Lambda calculus is a very simple programming language with variables and these two constructs:",
+    "application" -> "Application",
+    "abstraction" -> "Abstraction",
+    "slide1subt6" -> "The application, where you can think of f typically as a machine or a function",
+    "slide1subt7" -> "and x as an input for this function",
+    "slide1subt8" -> "so that f x is the result of giving x to f.",
+    "slide1subt9" -> "The abstraction allows you to create your own machines or functions.",
+    "slide1subt10" -> (if(useLambdaNotation) "Take a variable x, wrap it with a lambda on the left and a period on the right," else "Take a variable x, write an arrow to its right"),
+    "slide1subt11" -> "and whatever you would like to do with x, insert it in the M expression."
     ),
     "fr" -> Map(
-      "speaker" -> "French Female"
+      "speaker" -> "French Female",
+      "cando" -> " sait faire: ",
+      "slide0title" -> "Lambda Calcul et LISP",
+      "slide0subt0" -> "Bienvenue à ce cours d'introduction au Lambda Calcul.",
+      "slide0subt1" -> "Le Lambda Calcul rend la notion de langage fonctionnel beaucoup plus clair.",
+      "slide0subt2" -> "Nous verrons LISP dans une deuxième partie.",
+      "slide0subt3" -> "Commençons par le Lambda Calcul.",
+      "slide1title" -> "Lambda Calcul: Premier langage fonctionnel",
+      "slide1subt0" -> "Le Lambda calcul est le premier langage dit fonctionnel.",
+      "slide1subt1" -> "C'est Alonzo Church qui l'a introduit en 1932.",
+      "slide1example" -> "Exemple",
+      "slide1subt2" -> "Si vous connaissez déjà Scala, considérez l'équivalence suivante:",
+      
+      "scalaequivalentHeader" -> "Equivalent Scala",
+    "lambdacalculusHeader" -> "Lambda calcul",
+    "slide1subt3" -> "ça c'est une fonction scala currifiée à deux arguments et appliquée à a et b.",
+    "slide1subt4" -> "ça c'est l'équivalent en Lambda Calcul.",
+    "slide1introlambda" -> "Le Lambda Calcul possède uniquement des variables (x,y,a,b,…) et ces deux constructions:",
+    "slide1subt5" -> "Le Lambda Calcul est un langage de programmation très simple comprenant des variables et ces deux constructions:",
+    "application" -> "Application",
+    "abstraction" -> "Abstraction",
+    "slide1subt6" -> "L'application, où vous pouvez penser à f comme une machine ou une fonction",
+    "slide1subt7" -> "et x comme ce que vous fournissez à la machine",
+    "slide1subt8" -> "de telle sorte que f x est le résultat que fournit f quand on lui passe x.",
+    "slide1subt9" -> "L'abstraction vous permet de créer vos propres machines ou fonctions.",
+    "slide1subt10" -> (if(useLambdaNotation) "Prenez une variable x, écrivez un lambda sur sa gauche et un point à droite," else "Prenez une variable x, ajoutez-lui une flèche à droite,"),
+    "slide1subt11" -> "et utilisez x dans l'expression M pour faire quelque chose avec."
     )
   )
   
@@ -95,6 +149,12 @@ object Main {
       ^.position := "absolute",
       ^.display := "none",
       ^.bottom := "5px",
+      ^.width := "100%"
+    ),
+    ".subtitlewrapper.top" := (
+      ^.position := "absolute",
+      ^.bottom := "default",
+      ^.top := "5px",
       ^.width := "100%"
     ),
     ".subtitle" := (
@@ -517,35 +577,34 @@ object Main {
     val ex3 = A("f", List("M", "N"))
     val betareduction = "\\(\\beta\\)-reduction"
     val lambdacalculus = "\\(\\lambda\\)-calculus"
-    val can_do = " can do: "
+    val can_do = t("cando")
     
     val pfirst = _1(pair("M", "N"))
     val psecond = _2(pair("M", "N"))
     <.div(^.classes := "slides",
-slide(List(<.h2("Lambda Calculus and LISP", ^.classes := "centeredtitle")), say("Welcome to this introductory course to Lambda Calculus", "Knowing Lambda Calculus clarifies the essence of the notion of a functional language.", "We will explain LISP in a second part.", "Let's start with Lambda Calculus")),
-slide(<.h2("Lambda Calculus: First Functional Language") say "Lambda calculus is the first functional language.",
+slide(List(<.h2(t("slide0title"), ^.classes := "centeredtitle")), say(t("slide0subt0"), t("slide0subt1"), t("slide0subt2"), t("slide0subt3"))),
+slide(<.h2(t("slide1title")) say t("slide1subt0"),
   <.ul(
-    <.li(<.span("Church, A., 1932") say "It was introduced by Alonzo Church in 1932.", """, “A set of postulates for the foundation of logic”, """, <.i("Annals of Mathematics"), """(2nd Series), 33(2): 346–366.""")
+    <.li(<.span("Church, A., 1932") say t("slide1subt1"), """, “A set of postulates for the foundation of logic”, """, <.i("Annals of Mathematics"), """(2nd Series), 33(2): 346–366.""")
   ),
-  <.p("Example") say "If you already know scala, you can consider the following equivalent:",
+  <.p(t("slide1example")) say t("slide1subt2"),
   <.table(^.classes := "scalalambda",
     <.tbody(
-      <.tr(<.th("Scala equivalent", ^.id := "hdScala1"), <.th("Lambda calculus")),
+      <.tr(<.th(t("scalaequivalentHeader"), ^.id := "hdScala1"), <.th(t("lambdacalculusHeader"))),
       <.tr(<.td(example1.htmlScala) highlightOn "#hdScala1"
-        say "This is a curried Scala function taking two arguments, applied to a and b." highlightOff "#hdScala1"
+        say t("slide1subt3") highlightOff "#hdScala1"
       ,<.td(example1.html)
-        say "This is the equivalent in Lambda calculus.")
+        say t("slide1subt4"))
     )
   ),
   <.br(),
-  <.p("Lambda calculus has only variables (x,y,a,b,…) and these two constructs:")
-  say "Lambda calculus is a very simple programming language with variables and these two constructs:"
-  ,
+  <.p(t("slide1introlambda"))
+  say t("slide1subt5"),
   <.table(^.classes := "scalalambda",
     <.tbody(
-      <.tr(<.th(""), <.th("Scala Equivalent"), <.th("Lambda calculus")),
-      <.tr(<.td("Application"), <.td(app.htmlScala),<.td(app.html) say List("The application, where you can think of f typically as a machine or a function","and x as an input for this function", "so that f x is the result of giving x to f.")),
-      <.tr(<.td("Abstraction"), <.td(lam.htmlScala),<.td(lam.html) say List("The abstraction allows you to create your own machines or functions.", "Take a variable x, wrap it with a lambda on the left and a period on the right,", "and whatever you would like to do with x, insert it in the M expression.") )
+      <.tr(<.th(""), <.th(t("scalaequivalentHeader")), <.th(t("lambdacalculusHeader"))),
+      <.tr(<.td(t("application")), <.td(app.htmlScala),<.td(app.html) say List(t("slide1subt6"),t("slide1subt7"), t("slide1subt8"))),
+      <.tr(<.td(t("abstraction")), <.td(lam.htmlScala),<.td(lam.html) say List(t("slide1subt9"), t("slide1subt10"), t("slide1subt11")) )
     )
   )
 ),
@@ -768,9 +827,33 @@ slide(
   }
   
   var defaultVoice = """" + defaultVoice + """"
+  var highlightclass = """"+highlightclass+""""
   var paragraphs = function(elements) {
     return elements.find(".subtitlewrapper .subtitle .action").toArray()
   }
+  
+  var overlaps = (function () {
+    function getPositions( elem ) {
+        var pos, width, height;
+        pos = $( elem ).position();
+        width = $( elem ).width();
+        height = $( elem ).height();
+        return [ [ pos.left, pos.left + width ], [ pos.top, pos.top + height ] ];
+    }
+
+    function comparePositions( p1, p2 ) {
+        var r1, r2;
+        r1 = p1[0] < p2[0] ? p1 : p2;
+        r2 = p1[0] < p2[0] ? p2 : p1;
+        return r1[1] > r2[0] || r1[0] === r2[0];
+    }
+
+    return function ( a, b ) {
+        var pos1 = getPositions( a ),
+            pos2 = getPositions( b );
+        return comparePositions( pos1[0], pos2[0] ) && comparePositions( pos1[1], pos2[1] );
+    };
+})();
   
   var process = function(remainingActions, elem) {
     if(remainingActions.length != 0) {
@@ -780,11 +863,14 @@ slide(
         action.siblings().hide()
         action.show()
         $(elem).find(".subtitlewrapper").css('display', 'inline-block')
+        if($("." + highlightclass).length > 0 && overlaps($("." + highlightclass).get(0), $(elem).find(".subtitlewrapper").get(0))) {
+          $(elem).find(".subtitlewrapper").addClass("top")
+        }
         var todoatend = function() {
           action.hide()
           $(elem).find(".subtitlewrapper").css('display', 'none');
+          $(elem).find(".subtitlewrapper").removeClass("top")
         }
-        
         responsiveVoice.speak(text, defaultVoice, {
           onerror: function() {
             todoatend()
@@ -794,11 +880,11 @@ slide(
           process(remainingActions, elem)
         }})
       } else if(action.hasClass("highlighton")) {
-        $("."""+highlightclass+"""").removeClass(""""+highlightclass+"""")
-        $(text).addClass(""""+highlightclass+"""")
+        $("."+highlightclass).removeClass(highlightclass)
+        $(text).addClass(highlightclass)
         process(remainingActions, elem)
       } else if(action.hasClass("highlightoff")) {
-        $(text).removeClass(""""+highlightclass+"""")
+        $(text).removeClass(highlightclass)
         process(remainingActions, elem)
       }/* else if(action.hasClass("nextslide")) {
         setTimeout(function() { Reveal.next() }, 1000)
