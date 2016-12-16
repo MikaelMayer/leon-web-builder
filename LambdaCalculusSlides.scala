@@ -17,7 +17,7 @@ object Main {
     notationLambda else notationArrow
 
   val height = 600
-  val language = "fr"
+  val language = "en"
   val translations = Map(
     "en" -> Map(
       "speaker" ->  "US English Male",
@@ -108,7 +108,8 @@ object Main {
   // The css of the webpage.
   val css = Style(
     ".centeredtitle" := (
-      ^.marginTop := "50%",
+      ^.position := "relative",
+      ^.top := (height/2).toString+"px",
       ^.css("transform") := "translateY(-50%)"
     ),
     ".scalalambda tr:first-child" := (
@@ -822,10 +823,6 @@ slide(
   });"""
   
   def jsReponsiveVoice = """
-  if($("#responsivevoice").length == 0) {
-    $("head").append($('<script id="responsivevoice" src="https://code.responsivevoice.org/responsivevoice.js"/>'))
-  }
-  
   var defaultVoice = """" + defaultVoice + """"
   var highlightclass = """"+highlightclass+""""
   var paragraphs = function(elements) {
@@ -917,7 +914,12 @@ slide(
     observer.observe(elem,  { attributes: true });
   })
   
-  setTimeout( function() { read("section.present") }, 3000 )"""
+  setTimeout(function() {
+  if($("#responsivevoice").length == 0) {
+    $("head").append($('<script id="responsivevoice" src="https://code.responsivevoice.org/responsivevoice.js"/>'))
+  }
+  setTimeout( function() { read("section.present") }, 2500 )
+  }, 500)"""
   
   def javascript = jsReveal + jsKaTeX + jsReponsiveVoice 
 }
