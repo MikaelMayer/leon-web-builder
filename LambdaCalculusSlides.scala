@@ -722,7 +722,7 @@ slide(
   <.pre(<.code(^.classes := "Scala", """list match {
   case Nil => Z
   case Cons(x,y) => (y,y)
-}""")){
+}""")),{
   val l = A("list", List("Z", L(List("p"), A(L(List("y"), pair("y", "y")), List(_2("p"))))))
   List[WebTree](
     <.p("Becomes nothing else but"),
