@@ -146,10 +146,33 @@ object Main {
       ^.color := "darkred",
       ^.background := "#EEE"
     ),
+    ".playpausemenu" := (
+      ^.position := "absolute",
+      ^.bottom:= "0px",
+      ^.right:="0px",
+      ^.css("opacity"):="0.2",
+      ^.css("z-index"):="100"
+    ),
+    ".playpausemenu i" := (
+      ^.cursor := "pointer",
+      ^.font := "normal normal normal 14px/1 FontAwesome !important",
+      ^.fontSize:= "1em !important",
+      ^.padding:="2px !important"
+    ),
+    ".playpausemenu.playing i.play" := (
+      ^.display := "none"
+    ),
+    ".playpausemenu:not(.playing) i.pause" := (
+      ^.display := "none"
+    ),
+    ".playpausemenu i:hover" := (
+      ^.color := "blue",
+      ^.css("opacity"):="1"
+    ),
     ".subtitlewrapper" := (
       ^.position := "absolute",
       ^.display := "none",
-      ^.bottom := "5px",
+      ^.bottom := "0px",
       ^.width := "100%"
     ),
     ".subtitlewrapper.top" := (
@@ -514,9 +537,15 @@ object Main {
   
   def slide(l: List[WebTree]): Element = {
     <.section(
+      <.div(^.classes := "playpausemenu", 
+        <.i(^.classes:="stepbackward fa fa-step-backward"),
+        <.i(^.classes:="play fa fa-play-circle"),
+        <.i(^.classes:="pause fa fa-pause-circle"),
+        <.i(^.classes:="stepforward fa fa-step-forward")),
       <.span(^.classes := "subtitlewrapper",
         <.div(^.classes := "subtitle"
-        )), // Will be populated later.
+        )
+        ), // Will be populated later.
       l: WebTree
     )(nextSlide())
   }
@@ -552,15 +581,15 @@ object Main {
   def regroupSubtitles(s: WebElement): WebElement = {
     s match {
       case Element("section",
-        Cons(Element("span",
+        Cons(playmenu, Cons(Element("span",
           Cons(Element("div", sons3, attrs3, styles3), n),
           attrs2, styles2),
-        remaining), attrs, styles) =>
+        remaining)), attrs, styles) =>
         Element("section",
-        Cons(Element("span",
+        Cons(playmenu, Cons(Element("span",
           Cons(Element("div", sons3 ++ collectActions(remaining), attrs3, styles3), n),
           attrs2, styles2),
-        remaining), attrs, styles)
+        remaining)), attrs, styles)
       case Element(tag, sons, attrs, styles) =>
         Element(tag, sons.map(regroupSubtitles), attrs, styles)
       case _ => s
@@ -837,23 +866,59 @@ slide(
         height = $( elem ).height();
         return [ [ pos.left, pos.left + width ], [ pos.top, pos.top + height ] ];
     }
-
     function comparePositions( p1, p2 ) {
         var r1, r2;
         r1 = p1[0] < p2[0] ? p1 : p2;
         r2 = p1[0] < p2[0] ? p2 : p1;
         return r1[1] > r2[0] || r1[0] === r2[0];
     }
-
     return function ( a, b ) {
         var pos1 = getPositions( a ),
             pos2 = getPositions( b );
         return comparePositions( pos1[0], pos2[0] ) && comparePositions( pos1[1], pos2[1] );
     };
 })();
+  var menuSetPlaying = function() {
+    $(".playpausemenu").addClass("playing")
+  }
+  var menuStopPlaying = function() {
+    $(".playpausemenu").removeClass("playing")
+  }
+  var playAction = function() {
+    if(responsiveVoice.isPlaying()) {
+      responsiveVoice.resume()
+    } else {
+      read($("div.reveal > div.slides section.present"))
+    }
+    menuSetPlaying()
+  }
+  $("i.play").off("click.play").on("click.play", function() {
+    playAction()
+  })
+  var pauseAction = function() {
+    responsiveVoice.pause()
+    menuStopPlaying()
+  }
+  $("i.pause").off("click.pause").on("click.pause", function() {
+    pauseAction()
+  })
+  
+  $("i.stepforward").off("click.stepforward").on("click.stepforward", function() {
+    responsiveVoice.cancel()
+    process($("section.present .subtitlewrapper .subtitle .hiddenvoice:visible").nextAll(".action").toArray(), $("section.present").get(0))
+  })
+  $("i.stepbackward").off("click.stepbackward").on("click.stepbackward", function() {
+    responsiveVoice.cancel()
+    var news = $("section.present .subtitlewrapper .subtitle .hiddenvoice:visible").prevAll(".hiddenvoice").first()
+    if(news.prev(".highlighton").length > 0) {
+      news = news.prev(".highlighton")
+    }
+    process(news.add(news.nextAll(".action")).toArray(), $("section.present").get(0))
+  })
   
   var process = function(remainingActions, elem) {
     if(remainingActions.length != 0) {
+      menuSetPlaying()
       var action = $(remainingActions.shift());
       var text = action.text()
       if(action.hasClass("hiddenvoice")) {
@@ -886,6 +951,8 @@ slide(
       }/* else if(action.hasClass("nextslide")) {
         setTimeout(function() { Reveal.next() }, 1000)
       }*/
+    } else {
+      menuStopPlaying()
     }
   }
   
@@ -897,7 +964,6 @@ slide(
   
   var $target = $("div.reveal > div.slides section");
   var current = null
-
   $target.each(function(index, elem) {
     var observer = new MutationObserver(function(mutations) {
       mutations.forEach(function(mutation) {
