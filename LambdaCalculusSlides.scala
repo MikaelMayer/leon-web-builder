@@ -9,15 +9,16 @@ import leon.webDSL.webDescription._
 import implicits._
 
 object Main {
+  val height = 600
+  val language = "en"
+  val useLambdaNotation = true
+
   // Display parameters
   val notationLambda = ("\\lambda ","", ".\\;","")
   val notationArrow = ("", ",", "\\rightarrow ", "")
-  val useLambdaNotation = true
   val notation = if(useLambdaNotation)
     notationLambda else notationArrow
 
-  val height = 600
-  val language = "en"
   val translations = Map(
     "en" -> Map(
       "speaker" ->  "US English Male",
@@ -104,6 +105,7 @@ object Main {
   }
   
   val highlightclass = "highlightedElement"
+  val prehighlightclass = "prehighlightedElement"
 
   // The css of the webpage.
   val css = Style(
@@ -145,6 +147,10 @@ object Main {
       ^.fontWeight := "bold",
       ^.color := "darkred",
       ^.background := "#EEE"
+    ),
+    "." + prehighlightclass := (
+      ^.outline := "1px solid darkred",
+      ^.cursor := "help"
     ),
     ".playpausemenu" := (
       ^.position := "absolute",
@@ -538,10 +544,10 @@ object Main {
   def slide(l: List[WebTree]): Element = {
     <.section(
       <.div(^.classes := "playpausemenu", 
-        <.i(^.classes:="stepbackward fa fa-step-backward"),
-        <.i(^.classes:="play fa fa-play-circle"),
-        <.i(^.classes:="pause fa fa-pause-circle"),
-        <.i(^.classes:="stepforward fa fa-step-forward")),
+        <.i(^.classes:="stepbackward fa fa-step-backward", "Back"),
+        <.i(^.classes:="play fa fa-play-circle", "Play"),
+        <.i(^.classes:="pause fa fa-pause-circle", "Pause"),
+        <.i(^.classes:="stepforward fa fa-step-forward", "Fwd.")),
       <.span(^.classes := "subtitlewrapper",
         <.div(^.classes := "subtitle"
         )
@@ -847,13 +853,31 @@ slide(
   }
   $.getScript("https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/katex.min.js", function() {
     $.getScript("https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.6.0/contrib/auto-render.min.js", function() { 
-      renderMathInElement(document.getElementById("htmlDisplayerDiv"));
+      renderMathInElement(document.getElementsByClassName("reveal")[0]);
+      if(typeof WBProductionVersion=="undefined") {
+        $("span[data-reservedattributeforimplicitwebprogrammingid] > span > span.katex").parent().parent().each(function(index, elem) {
+          $(elem).off("dblclick.revert").on("dblclick.revert", function() {
+            var originalChildren = $(elem).children().clone()
+            $(elem).find("span.katex").each(function(i, e) {
+              var originalText = "\\(" + $(elem).find("annotation").text() + "\\)"
+              $(e).parent().text(originalText)
+            })
+            $(elem).text($(elem).text())
+            $(elem).one("focusout", (function(elem, originalChildren) {
+              return function() {
+                renderMathInElement(elem)
+            }
+            })(elem, originalChildren))
+          })
+        })
+      }
     })
   });"""
   
   def jsReponsiveVoice = """
   var defaultVoice = """" + defaultVoice + """"
   var highlightclass = """"+highlightclass+""""
+  var prehighlightclass = """"+prehighlightclass+""""
   var paragraphs = function(elements) {
     return elements.find(".subtitlewrapper .subtitle .action").toArray()
   }
@@ -884,11 +908,23 @@ slide(
   var menuStopPlaying = function() {
     $(".playpausemenu").removeClass("playing")
   }
+  var actionsStartingAt = function(elem) {
+    while(elem.prev(".highlighton").length > 0) {
+      elem = elem.prev(".highlighton")
+    }
+    return elem.add(elem.nextAll(".action")).toArray()
+  }
+  
   var playAction = function() {
     if(responsiveVoice.isPlaying()) {
       responsiveVoice.resume()
     } else {
-      read($("div.reveal > div.slides section.present"))
+      var visiblesub = $("section.present .subtitlewrapper .subtitle .hiddenvoice:visible")
+      if(visiblesub.length > 0) {
+        process(actionsStartingAt(visiblesub), $("section.present").get(0))
+      } else {
+        read($("div.reveal > div.slides section.present"))
+      }
     }
     menuSetPlaying()
   }
@@ -905,15 +941,21 @@ slide(
   
   $("i.stepforward").off("click.stepforward").on("click.stepforward", function() {
     responsiveVoice.cancel()
-    process($("section.present .subtitlewrapper .subtitle .hiddenvoice:visible").nextAll(".action").toArray(), $("section.present").get(0))
+    var news = actionsStartingAt($("section.present .subtitlewrapper .subtitle .hiddenvoice:visible").nextAll(".hiddenvoice").first())
+    if(news.length == 0) {
+      Reveal.next()
+    } else {
+      process(news, $("section.present").get(0))
+    }
   })
   $("i.stepbackward").off("click.stepbackward").on("click.stepbackward", function() {
     responsiveVoice.cancel()
-    var news = $("section.present .subtitlewrapper .subtitle .hiddenvoice:visible").prevAll(".hiddenvoice").first()
-    if(news.prev(".highlighton").length > 0) {
-      news = news.prev(".highlighton")
+    var news = actionsStartingAt($("section.present .subtitlewrapper .subtitle .hiddenvoice:visible").prevAll(".hiddenvoice").first())
+    if(news.length == 0) {
+      Reveal.prev()
+    } else {
+      process(news, $("section.present").get(0))
     }
-    process(news.add(news.nextAll(".action")).toArray(), $("section.present").get(0))
   })
   
   var process = function(remainingActions, elem) {
@@ -950,7 +992,9 @@ slide(
         process(remainingActions, elem)
       }/* else if(action.hasClass("nextslide")) {
         setTimeout(function() { Reveal.next() }, 1000)
-      }*/
+      }*/ else {
+        menuStopPlaying()
+      }
     } else {
       menuStopPlaying()
     }
@@ -960,6 +1004,22 @@ slide(
     var actions = paragraphs($(elem))
     console.log("reading aloud ", elem)
     process(actions, elem)
+    if(typeof WBProductionVersion!="undefined") {
+      $(elem).find(".subtitlewrapper .subtitle .action.highlighton").each(function(index, e) {
+        var selector = $(e).text()
+        $(selector).off("click.subtitle").on("click.subtitle", function() {
+          readStartingAt($(e))
+        }).off("mouseenter.highlight").on("mouseenter.highlight", function() {
+          $(this).addClass(prehighlightclass)
+        }).off("mouseleave.highlight").on("mouseleave.highlight", function() {
+          $(this).removeClass(prehighlightclass)
+        });
+      })
+    }
+  }
+  
+  var readStartingAt = function(action) {
+    process(actionsStartingAt(action), $("section.present").get(0))
   }
   
   var $target = $("div.reveal > div.slides section");
