@@ -19,7 +19,7 @@ object Main {
   val slideColor = "cyan"
   val name = "Marion"
   val language = "fr"
-  val height = "600"
+  val height = "500"
   
   /*
   val slideColor = "cyan"
@@ -32,13 +32,25 @@ object Main {
     "section" := (
       ^.css("font-size") := "0.6em !important",
       ^.padding := "10px",
-      ^.minHeight:= height + "px",
-      ^.border := "1px solid black"
+      ^.minHeight:= height + "px !important",
+      ^.border := "1px solid black",
+      ^.top := "0px !important"
     ),
-    "> div" := (
+    ".slides" := (
+      ^.height := "100% !important",
+      ^.left := "0px !important"/*,
+      ^.top := "0px !important"*/
+    ),
+    ".reveal" := (
+      ^.overflow:= "visible"  
+    ),
+    "" := (
+      ^.height := "100%"
+    ),
+    "> div, > div > div" := (
       ^.position := "absolute",
       ^.width := "100%",
-      ^.top := "300px"
+      ^.height := "100%"
     ),
     "h2" := (
       ^.margin := "10px"
@@ -60,7 +72,7 @@ object Main {
     "usecoding" -> " utilise un langage de programmation et modifie le code.",
     "continue" -> " Tourne la molete pour continuer.",
     "langchange" -> "Langue : ",
-    "colorofthisslide" -> "La couleur de cette diapo est : ",
+    "colorofthisslide" -> "La couleur de ce slide est : ",
     "putinpink" -> "Change la couleur de cette diapo en pink (rose)",
     "congratulations" -> "Félicitations ",
     "heightis" -> "La hauteur des diapo est de ",
@@ -178,24 +190,32 @@ object Main {
   }
   
   def javascript = """
-  $.getScript("/assets/js/reveal.js", function() {
-    Reveal.initialize();
+  $.getScript("/assets/reveal.js/js/reveal.js", function() {
+    Reveal.initialize(
+      {width: "100%",
+        height: "100%",
+        margin: 0,
+        minScale: 1,
+        maxScale: 1,
+        slideNumber: false,
+        mouseWheel: true,
+        transition: 'none' // default/none/fade/slide/convex/concave/zoom
+    });
   });
   
   if($("#revealcsslink").length == 0) {
-    $("head").append($('<link id="revealcsslink" rel="stylesheet" media="screen" href="/assets/css/reveal.css">'))
+    $("head").append($('<link id="revealcsslink" rel="stylesheet" media="screen" href="/assets/reveal.js/css/reveal.css">'))
   }
   
   if($("#themewebbuilder").length == 0) {
     $("head").append($('<link id="themewebbuilder" rel="stylesheet" media="screen"/>'))
   }
   
-  $("#themewebbuilder").attr("href", "/assets/css/theme/simple.css");
-  
+  $("#themewebbuilder").attr("href", "/assets/reveal.js/css/theme/simple.css");
+    /*
   if($("#responsivevoice").length == 0) {
     $("head").append($('<script id="responsivevoice" src="https://code.responsivevoice.org/responsivevoice.js"/>'))
   }
-
   var paragraphs = function(elements) {
     return elements.find("*").contents().filter(function() { return this.nodeType === 3; }).map(function(index, elem) { return elem.textContent; })
   }
@@ -222,7 +242,6 @@ object Main {
     observer.observe(elem,  { attributes: true });
   })
   
-  setTimeout( function() { read("section.present") }, 3000 )
-
-  """
+  setTimeout( function() { read("section.present") }, 3000 ) */
+  """  
 }
