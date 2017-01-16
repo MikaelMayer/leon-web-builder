@@ -125,14 +125,25 @@ object Main {
     ),
     "section:not(.verticalsplit)" := (
       ^.css("font-size") := "0.6em !important",
-      ^.padding := "10px",
-      ^.minHeight:= height + "px",
-      ^.border := "1px solid black"
+      ^.minHeight:= height + "px !important",
+      ^.border := "1px solid black",
+      ^.top := "0px !important"
     ),
-    "> div" := (
+    ".slides" := (
+      ^.height := "100% !important",
+      ^.left := "0px !important"/*,
+      ^.top := "0px !important"*/
+    ),
+    ".reveal" := (
+      ^.overflow:= "visible"  
+    ),
+    "" := (
+      ^.height := "100%"
+    ),
+    "> div, > div > div" := (
       ^.position := "absolute",
       ^.width := "100%",
-      ^.top := "300px"
+      ^.height := "100%"
     ),
     "h2" := (
       ^.margin := "10px"
@@ -816,7 +827,7 @@ slide(
         )), css)
   }
   
-  def jsReveal = """$.getScript("/assets/js/reveal.js", function() {
+  def jsReveal = """$.getScript("/assets/reveal.js/js/reveal.js", function() {
     var i = -1;
     $("section").each(function(index, e) { if($(e).hasClass("present")) {i = index; console.log("i = " + index); } });
     var options = {
@@ -838,14 +849,14 @@ slide(
     Reveal.slide( i, 0, 0 );
   });
   if($("#revealcsslink").length == 0) {
-    $("head").append($('<link id="revealcsslink" rel="stylesheet" media="screen" href="/assets/css/reveal.css">'))
+    $("head").append($('<link id="revealcsslink" rel="stylesheet" media="screen" href="/assets/reveal.js/css/reveal.css">'))
   }
   
   if($("#themewebbuilder").length == 0) {
     $("head").append($('<link id="themewebbuilder" rel="stylesheet" media="screen"/>'))
   }
   
-  $("#themewebbuilder").attr("href", "/assets/css/theme/simple.css");
+  $("#themewebbuilder").attr("href", "/assets/reveal.js/css/theme/simple.css");
   """
   
   def jsKaTeX = """if($("#katexcsslink").length == 0) {
